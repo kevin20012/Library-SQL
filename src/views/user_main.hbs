@@ -1,0 +1,181 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>User Main</title>
+		<!-- Bootstrap CSS -->
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+		/>
+		<style>
+			body { font-family: "Arial", sans-serif; } .navbar-custom {
+			background-color: #f8f9fa; border-bottom: 1px solid #e5e5e5; }
+			.user-info { font-size: 1.2rem; font-weight: bold; } .search-bar {
+			max-width: 500px; margin: 0 auto; } .navbar-buttons { display: flex;
+			gap: 10px; } table { width: 100%; margin-top: 20px; border-collapse:
+			collapse; } th, td { padding: 10px; text-align: left; border: 1px
+			solid #ddd; } th { background-color: #f4f4f4; font-weight: bold; }
+		</style>
+	</head>
+	<body>
+		<!-- Navigation Bar -->
+		<nav class="navbar navbar-expand-lg navbar-custom">
+			<div class="container-fluid">
+				<!-- User Info -->
+				<div class="d-flex align-items-center user-info">
+					<span id="user-name">INHA Library</span>
+				</div>
+
+				<!-- Right-side Buttons -->
+				<div class="navbar-buttons ms-auto">
+					<a href="/main/reservation" class="btn btn-primary">예약
+						확인</a>
+					<a
+						href="/main/shopping_list"
+						class="btn btn-secondary"
+					>장바구니</a>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="container mt-4">
+			<!-- Welcome Message -->
+			<h1>안녕하세요! {{user.name}} 님</h1>
+			<p>책을 검색해보세요. 책, 작가, 수상기록을 이용해 책을 검색할 수
+				있습니다.</p>
+
+			<!-- Center Search Bar -->
+			<!-- Center Search Bar -->
+			<form
+				class="d-flex flex-column align-items-start search-bar"
+				action="/main/search"
+				method="get"
+			>
+				<!-- Radio Buttons -->
+				<div class="d-flex mb-3">
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input"
+						type="radio"
+						name="option"
+						id="option1"
+						value="book"
+						{{#if (eq option "book")}}checked{{/if}}
+					/>
+					<label class="form-check-label" for="option1">책 제목</label>
+				</div>
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input"
+						type="radio"
+						name="option"
+						id="option2"
+						value="author"
+						{{#if (eq option "author")}}checked{{/if}}
+					/>
+					<label class="form-check-label" for="option2">작가 이름</label>
+				</div>
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input"
+						type="radio"
+						name="option"
+						id="option3"
+						value="award"
+						{{#if (eq option "award")}}checked{{/if}}
+					/>
+					<label class="form-check-label" for="option3">수상</label>
+				</div>
+			</div>
+
+				<!-- Search Input -->
+				<div class="d-flex align-items-center">
+					<input
+						class="form-control"
+						type="search"
+						name="query"
+						placeholder="Search for books, authors..."
+						aria-label="Search"
+						style="width: 400px;"
+						value="{{query}}"
+					/>
+					<button
+						class="btn btn-outline-primary ms-2"
+						type="submit"
+					>Search</button>
+				</div>
+			</form>
+
+			<!-- Search Results -->
+			{{#if searchResults}}
+				<h2 class="mt-4">검색 결과</h2>
+				<p class="text-muted">Page {{pageInfo.currentPage}} of {{pageInfo.totalPages}} (Total: {{pageInfo.totalCount}})</p>
+				<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+					{{#each searchResults}}
+					<div class="col">
+						<div class="card h-100 shadow-sm">
+							<div class="card-body">
+								<h4 class="card-title text-primary">{{Title}}</h4>
+								<p class="card-text">
+									<strong>작가:</strong> {{Author}}<br />
+									<strong>ISBN:</strong> {{ISBN}}<br />
+									<strong>분류:</strong> {{Category}}<br />
+									<strong>수상내역:</strong> {{Award}}<br />
+									<strong>연도:</strong> {{Year}}<br />
+									<strong>가격:</strong> ${{Price}}
+								</p>
+							</div>
+						</div>
+					</div>
+					{{/each}}
+				</div>
+				<!-- Pagination -->
+				<nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+					<ul class="pagination">
+						<li class="page-item">
+							<a
+								class="page-link"
+								href="/main/search?page=1&option={{option}}&query={{query}}"
+							>&laquo;</a>
+						</li>
+						<li class="page-item">
+							<a
+								class="page-link"
+								href="/main/search?page={{pageInfo.prevPage}}&option={{option}}&query={{query}}"
+							>이전</a>
+						</li>
+						{{#each Page}}
+						<li class="page-item">
+							<a
+								class="page-link"
+								href="/main/search?page={{this}}&option={{../option}}&query={{../query}}"
+							>{{this}}</a>
+						</li>
+						{{/each}}
+						<li class="page-item">
+							<a
+								class="page-link"
+								href="/main/search?page={{pageInfo.nextPage}}&option={{option}}&query={{query}}"
+							>다음</a>
+						</li>
+						<li class="page-item">
+							<a
+								class="page-link"
+								href="/main/search?page={{pageInfo.totalPages}}&option={{option}}&query={{query}}"
+							>&raquo;</a>
+						</li>
+					</ul>
+				</nav>
+			{{else}}
+				<p class="mt-4 text-center text-muted">검색 결과가 없습니다. 다른 키워드로 검색해보세요.</p>
+			{{/if}}
+		</div>
+
+		<!-- Bootstrap JS -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		></script>
+	</body>
+</html>
