@@ -1,0 +1,11 @@
+DELETE FROM `Inventory`;
+DELETE FROM `Contains`;
+DELETE FROM `Reservation`;
+DELETE FROM `Award_has_Book`;
+DELETE FROM `Author_has_Award`;
+DELETE FROM `Customer`;
+DELETE FROM `Book`;
+DELETE FROM `Author`;
+DELETE FROM `Warehouse`;
+DELETE FROM `Award`;
+DELETE FROM `Shopping_basket`;

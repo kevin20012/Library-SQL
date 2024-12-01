@@ -1,0 +1,245 @@
+<html lang="ko">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>책정보 관리</title>
+		<!-- Bootstrap CSS -->
+		<link
+			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<!-- Header Section -->
+		<nav class="navbar navbar-light bg-light shadow-sm mb-4">
+			<div class="container">
+				<a href="/admin" class="navbar-brand d-flex align-items-center">
+					<span class="fs-1 me-3">←</span>
+					<h1 class="h3 m-0">책정보 관리</h1>
+				</a>
+			</div>
+		</nav>
+
+		<!-- Add Book Section -->
+		<div class="container mb-4">
+			<div class="card shadow">
+				<div class="card-body">
+					<h2 class="card-title mb-4">추가하기</h2>
+					<form method="post" action="/admin/book/insert">
+						<div class="row mb-3">
+							<div class="col-md-2">
+								<label for="ISBN" class="form-label"><b
+									>ISBN</b></label>
+								<input
+									type="text"
+									name="ISBN"
+									id="ISBN"
+									class="form-control"
+									required
+								/>
+							</div>
+							<div class="col-md-2">
+								<label for="Category" class="form-label"><b
+									>Category</b></label>
+								<input
+									type="text"
+									name="Category"
+									id="Category"
+									class="form-control"
+									required
+								/>
+							</div>
+							<div class="col-md-2">
+								<label for="Price" class="form-label"><b
+									>Price</b></label>
+								<input
+									type="text"
+									name="Price"
+									id="Price"
+									class="form-control"
+									required
+								/>
+							</div>
+							<div class="col-md-2">
+								<label for="Title" class="form-label"><b
+									>Title</b></label>
+								<input
+									type="text"
+									name="Title"
+									id="Title"
+									class="form-control"
+									required
+								/>
+							</div>
+							<div class="col-md-2">
+								<label for="Year" class="form-label"><b
+									>Year</b></label>
+								<input
+									type="text"
+									name="Year"
+									id="Year"
+									class="form-control"
+									required
+								/>
+							</div>
+							<div class="col-md-2">
+								<label for="Author_ID" class="form-label"><b
+									>Author_ID</b></label>
+								<input
+									type="text"
+									name="Author_ID"
+									id="Author_ID"
+									class="form-control"
+									required
+								/>
+							</div>
+						</div>
+						<div class="text-end">
+							<button
+								type="submit"
+								class="btn btn-primary"
+							>추가</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Book Information Section -->
+		<div class="container">
+			<div class="card shadow">
+				<div class="card-body">
+					<h2 class="card-title mb-4">책 정보</h2>
+					<p>{{pageInfo.currentPage}}
+						/
+						{{pageInfo.totalPages}}
+						(total
+						{{pageInfo.totalCount}})</p>
+					<table class="table table-bordered table-striped">
+						<thead class="table-light">
+							<tr>
+								<th>ISBN</th>
+								<th>Category</th>
+								<th>Price</th>
+								<th>Title</th>
+								<th>Year</th>
+								<th>Author_ID</th>
+								<th>수정</th>
+								<th>삭제</th>
+							</tr>
+						</thead>
+						<tbody>
+							{{#each Data}}
+								<tr>
+									<form method="post">
+										<input
+											type="hidden"
+											name="ISBN_origin"
+											value="{{ISBN}}"
+										/>
+										<td><input
+												type="text"
+												name="ISBN_modify"
+												class="form-control"
+												value="{{ISBN}}"
+											/></td>
+										<td><input
+												type="text"
+												name="Category"
+												class="form-control"
+												value="{{Category}}"
+											/></td>
+										<td><input
+												type="text"
+												name="Price"
+												class="form-control"
+												value="{{Price}}"
+											/></td>
+										<td><input
+												type="text"
+												name="Title"
+												class="form-control"
+												value="{{Title}}"
+											/></td>
+										<td><input
+												type="text"
+												name="Year"
+												class="form-control"
+												value="{{Year}}"
+											/></td>
+										<td><input
+												type="text"
+												name="Author_ID"
+												class="form-control"
+												value="{{Author_ID}}"
+											/></td>
+										<td>
+											<button
+												type="submit"
+												class="btn btn-warning"
+												formaction="/admin/book/update"
+											>수정</button>
+										</td>
+										<td>
+											<button
+												type="submit"
+												class="btn btn-danger"
+												formaction="/admin/book/delete"
+											>삭제</button>
+										</td>
+									</form>
+								</tr>
+							{{/each}}
+						</tbody>
+					</table>
+
+					<!-- Pagination -->
+					<nav
+						aria-label="Page navigation"
+						class="d-flex justify-content-center"
+					>
+						<ul class="pagination">
+							<li class="page-item">
+								<a
+									class="page-link"
+									href="/admin/book?page=1"
+								>&laquo;</a>
+							</li>
+							<li class="page-item">
+								<a
+									class="page-link"
+									href="/admin/book?page={{pageInfo.prevPage}}"
+								>이전</a>
+							</li>
+							{{#each Page}}
+								<li class="page-item">
+									<a
+										class="page-link"
+										href="/admin/book?page={{this}}"
+									>{{this}}</a>
+								</li>
+							{{/each}}
+							<li class="page-item">
+								<a
+									class="page-link"
+									href="/admin/book?page={{pageInfo.nextPage}}"
+								>다음</a>
+							</li>
+							<li class="page-item">
+								<a
+									class="page-link"
+									href="/admin/book?page={{pageInfo.totalPages}}"
+								>&raquo;</a>
+							</li>
+						</ul>
+					</nav>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bootstrap JS -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		></script>
+	</body>
+</html>
