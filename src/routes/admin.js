@@ -100,13 +100,17 @@ function myRouter(router, entity) {
 			const entity_info = await getInfoFromTable(entity, req, res);
 			const datas = entity_info.data;
 
-			const startPage =
-				entity_info.currentPage - (entity_info.currentPage % 10) + 1;
-			const endPage =
-				entity_info.currentPage -
-				(entity_info.currentPage % 10) +
-				1 +
-				9;
+			let startPage;
+			if (search_info.currentPage % 10 === 0) {
+				startPage = search_info.currentPage - 9;
+			} else {
+				startPage =
+					search_info.currentPage -
+					(search_info.currentPage % 10) +
+					1;
+			}
+
+			const endPage = startPage + 9;
 			let prevPage = 0,
 				nextPage = 0;
 			if (startPage - 2 < 1) {
@@ -119,6 +123,7 @@ function myRouter(router, entity) {
 			} else {
 				nextPage = endPage + 1;
 			}
+
 			const pageInfo = {
 				currentPage: entity_info.currentPage,
 				startPage: startPage,
@@ -128,6 +133,8 @@ function myRouter(router, entity) {
 				prevPage: prevPage,
 				nextPage: nextPage,
 			};
+			if (pageInfo.totalPages < pageInfo.endPage)
+				pageInfo.endPage = pageInfo.totalPages;
 			console.log(datas);
 			res.render("admin_" + entity, {
 				Data: datas,

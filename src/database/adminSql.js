@@ -98,7 +98,7 @@ export const selectSql = {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d') AS Reservation_date, Pickup_time from Reservation LIMIT ? OFFSET ? for update`;
+			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time from Reservation LIMIT ? OFFSET ? for update`;
 			const sql2 = `select count(*) as totalCount from Reservation for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
 			const [result2] = await promisePool.query(sql2);
@@ -114,7 +114,7 @@ export const selectSql = {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select BasketID, DATE_FORMAT(Order_date, '%Y-%m-%d') AS Order_date, Customer_Email from Shopping_basket LIMIT ? OFFSET ? for update`;
+			const sql = `select BasketID, DATE_FORMAT(Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, Customer_Email from Shopping_basket LIMIT ? OFFSET ? for update`;
 			const sql2 = `select count(*) as totalCount from Shopping_basket for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
 			const [result2] = await promisePool.query(sql2);
