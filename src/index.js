@@ -17,8 +17,11 @@ app.use(express.json());
 app.use(
 	expressSession({
 		secret: "my key",
-		resave: true,
-		saveUninitialized: true,
+		resave: false,
+		saveUninitialized: false,
+		cookie: {
+			maxAge: 1000 * 60 * 30, // 30분 유지
+		},
 	})
 );
 

@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS `Term`.`Reservation` (
   `ID` INT NOT NULL,
   `Reservation_date` DATETIME NULL,
   `Pickup_time` DATETIME NULL,
+  `Number` INT NOT NULL,
   PRIMARY KEY (`ID`),
   INDEX `fk_Book_has_Customer_Customer1_idx` (`Customer_Email` ASC) VISIBLE,
   INDEX `fk_Book_has_Customer_Book_idx` (`Book_ISBN` ASC) VISIBLE,
@@ -108,7 +109,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `Term`.`Contains` (
   `Book_ISBN` INT NOT NULL,
   `Shopping_basket_BasketID` INT NOT NULL,
-  `Number` INT NULL,
+  `Number` INT NOT NULL,
   PRIMARY KEY (`Book_ISBN`, `Shopping_basket_BasketID`),
   INDEX `fk_Book_has_Shopping_basket_Shopping_basket1_idx` (`Shopping_basket_BasketID` ASC) VISIBLE,
   INDEX `fk_Book_has_Shopping_basket_Book1_idx` (`Book_ISBN` ASC) VISIBLE,

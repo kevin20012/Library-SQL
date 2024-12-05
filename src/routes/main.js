@@ -1,9 +1,18 @@
 import express from "express";
-import { selectSql, updateSql } from "../database/userSql.js";
+import {
+	insertSql,
+	selectSql,
+	updateSql,
+	deleteSql,
+} from "../database/userSql.js";
 
 const hbs = require("hbs");
 
 hbs.registerHelper("eq", (a, b) => a === b);
+
+function ceil(number, fix) {
+	return (Math.ceil(number * (10 ^ fix)) / (10 ^ fix)).toFixed(fix);
+}
 
 const router = express.Router();
 
@@ -56,9 +65,19 @@ const getInfoFromTable = async (arg, req, res) => {
 			);
 		} else if (arg.type === "reservation") {
 			[datas] = await selectSql.getReservation(arg.email, limit, offset);
+		} else if (arg.type === "shoppingBasket") {
+			[datas] = await selectSql.getShoppingBasket(
+				arg.email,
+				limit,
+				offset
+			);
 		}
-
-		const totalCount = datas[0].totalCount;
+		let totalCount;
+		if (datas.length === 0) {
+			totalCount = 0;
+		} else {
+			totalCount = datas[0].totalCount;
+		}
 
 		// 총 페이지 수 계산
 		const totalPages = Math.ceil(totalCount / limit);
@@ -75,6 +94,7 @@ const getInfoFromTable = async (arg, req, res) => {
 	}
 };
 
+// 검색 기능
 router.get("/search", async (req, res) => {
 	if (
 		req.session.user !== undefined &&
@@ -143,6 +163,8 @@ router.get("/search", async (req, res) => {
 		res.redirect("/");
 	}
 });
+
+// 예약 확인 페이지
 router.get("/reservation", async (req, res) => {
 	if (
 		req.session.user !== undefined &&
@@ -168,11 +190,11 @@ router.get("/reservation", async (req, res) => {
 			return result;
 		});
 		let startPage;
-		if (search_info.currentPage % 10 === 0) {
-			startPage = search_info.currentPage - 9;
+		if (reserv_info.currentPage % 10 === 0) {
+			startPage = reserv_info.currentPage - 9;
 		} else {
 			startPage =
-				search_info.currentPage - (search_info.currentPage % 10) + 1;
+				reserv_info.currentPage - (reserv_info.currentPage % 10) + 1;
 		}
 
 		const endPage = startPage + 9;
@@ -198,8 +220,8 @@ router.get("/reservation", async (req, res) => {
 			nextPage: nextPage,
 		};
 		// console.log(datas);
-		console.log(pageInfo.totalPages);
-		console.log(pageInfo.endPage);
+		// console.log(pageInfo.totalPages);
+		// console.log(pageInfo.endPage);
 		if (pageInfo.totalPages < pageInfo.endPage)
 			pageInfo.endPage = pageInfo.totalPages;
 		res.render("user_reservation", {
@@ -207,11 +229,35 @@ router.get("/reservation", async (req, res) => {
 				name: name[0].Name,
 			},
 			reservations: datas,
-			Page: range(pageInfo.startPage, pageInfo.endPage),
+			Page: range(pageInfo.startPage, pageInfo.endPage + 1),
 			pageInfo: pageInfo,
 		});
 	} else {
 		res.redirect("/");
+	}
+});
+router.post("/reservation/addReservation", async (req, res) => {
+	const input = req.body;
+	console.log(req.query);
+	console.log(input);
+	const data = {
+		Email: req.session.user.id,
+		ISBN: input.ISBN,
+		quantity: input.quantity,
+		pickupTime: input.pickupTimeInput,
+	};
+	const result = await insertSql.insertReservation(data);
+
+	if (result.success === true) {
+		res.send(`<script>
+			alert('예약 성공!');
+			location.href='/main';
+		</script>`);
+	} else {
+		res.send(`<script>
+			alert('예약 실패! error:${result.error}');
+			location.href='/main';
+		</script>`);
 	}
 });
 router.post("/reservation/pickupTimeModify", async (req, res) => {
@@ -232,6 +278,156 @@ router.post("/reservation/pickupTimeModify", async (req, res) => {
 			alert('수정 실패! error:${result.error}');
 			location.href='/main/reservation/';
 		</script>`);
+	}
+});
+router.post("/reservation/delete", async (req, res) => {
+	const input = req.body;
+	const data = {
+		id: input.ID,
+		ISBN: input.ISBN,
+		Number: input.Number,
+	};
+	const result = await deleteSql.deleteReservation(data);
+
+	if (result.success === true) {
+		res.send(`<script>
+			alert('삭제 성공!');
+			location.href='/main/reservation/';
+		</script>`);
+	} else {
+		res.send(`<script>
+			alert('삭제 실패! error:${result.error}');
+			location.href='/main/reservation/';
+		</script>`);
+	}
+});
+
+//장바구니 확인 페이지
+router.get("/shoppingBasket", async (req, res) => {
+	if (
+		req.session.user !== undefined &&
+		req.session.user.role === "Customer"
+	) {
+		const arg = {
+			type: "shoppingBasket",
+			email: req.session.user.id,
+		};
+		const shoppingBasketInfo = await getInfoFromTable(arg, req, res);
+		console.log(shoppingBasketInfo);
+		let datas = shoppingBasketInfo.data;
+		let totalPrice = 0;
+
+		datas.forEach((item) => {
+			totalPrice +=
+				Math.round(Number(item.Price) * item.Number * 100) / 100;
+		});
+		totalPrice = Math.round(totalPrice * 100) / 100;
+
+		let startPage;
+		if (shoppingBasketInfo.currentPage % 10 === 0) {
+			startPage = shoppingBasketInfo.currentPage - 9;
+		} else {
+			startPage =
+				shoppingBasketInfo.currentPage -
+				(shoppingBasketInfo.currentPage % 10) +
+				1;
+		}
+
+		const endPage = startPage + 9;
+		let prevPage = 0,
+			nextPage = 0;
+		if (startPage - 2 < 1) {
+			prevPage = 1;
+		} else {
+			prevPage = startPage - 2;
+		}
+		if (endPage + 1 > shoppingBasketInfo.totalPages) {
+			nextPage = shoppingBasketInfo.totalPages;
+		} else {
+			nextPage = endPage + 1;
+		}
+		const pageInfo = {
+			currentPage: shoppingBasketInfo.currentPage,
+			startPage: startPage,
+			endPage: endPage,
+			totalPages: shoppingBasketInfo.totalPages,
+			totalCount: shoppingBasketInfo.totalCount,
+			prevPage: prevPage,
+			nextPage: nextPage,
+		};
+		// console.log(datas);
+		// console.log(pageInfo.totalPages);
+		// console.log(pageInfo.endPage);
+		if (pageInfo.totalPages < pageInfo.endPage)
+			pageInfo.endPage = pageInfo.totalPages;
+		res.render("user_shoppingBasket", {
+			user: {
+				name: name[0].Name,
+			},
+			shoppingBasket: datas,
+			totalPrice: totalPrice,
+			Page: range(pageInfo.startPage, pageInfo.endPage + 1),
+			pageInfo: pageInfo,
+		});
+	} else {
+		res.redirect("/");
+	}
+});
+router.post("/shoppingBasket/addShoppingBasket", async (req, res) => {
+	const input = req.body;
+	const data = {
+		Email: req.session.user.id,
+		ISBN: input.ISBN,
+		quantity: input.quantity,
+	};
+	const result = await insertSql.insertShoppingBasket(data);
+
+	if (result.success === true) {
+		res.send(`<script>
+			alert('장바구니에 추가되었습니다!');
+			location.href='/main';
+		</script>`);
+	} else {
+		res.send(`<script>
+			alert('장바구니 추가에 실패하였습니다! error:${result.error}');
+			location.href='/main';
+		</script>`);
+	}
+});
+router.post("/shoppingBasket/delete", async (req, res) => {
+	const input = req.body;
+	const data = {
+		BasketID: input.BasketID,
+		ISBN: input.ISBN,
+		Number: input.Number,
+	};
+	const result = await deleteSql.deleteShoppingBasket(data);
+
+	if (result.success === true) {
+		res.send(`<script>
+			alert('삭제 성공!');
+			location.href='/main/shoppingBasket/';
+		</script>`);
+	} else {
+		res.send(`<script>
+			alert('삭제 실패! error:${result.error}');
+			location.href='/main/shoppingBasket/';
+		</script>`);
+	}
+});
+router.post("/shoppingBasket/purchase", async (req, res) => {
+	const input = req.body;
+	console.log(input);
+	const data = {
+		BasketID: input.BasketID,
+	};
+	console.log(data);
+	const result = await updateSql.updateOrderDate(data);
+
+	if (result.success === true) {
+		res.status(200).send("구매완료");
+	} else {
+		res.status(400).send("구매실패");
 	}
 });
 

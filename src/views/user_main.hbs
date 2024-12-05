@@ -15,8 +15,76 @@
 			max-width: 500px; margin: 0 auto; } .navbar-buttons { display: flex;
 			gap: 10px; } table { width: 100%; margin-top: 20px; border-collapse:
 			collapse; } th, td { padding: 10px; text-align: left; border: 1px
-			solid #ddd; } th { background-color: #f4f4f4; font-weight: bold; }
+			solid #ddd; } th { background-color: #f4f4f4; font-weight: bold; }.card-body {
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+			}
+			.card-buttons {
+				margin-top: auto; /* 버튼들을 하단에 배치 */
+			}
+			/* 카드 기본 설정 */
+
+			/* 숨겨진 컨텐츠 */
+			.hover-content {
+				position: absolute; /* 부모를 기준으로 위치 설정 */
+				bottom: 15px; /* 카드 하단에 고정 */
+				left: 15px; /* 카드 좌측 여백 */
+				right: 15px; /* 카드 우측 여백 */
+				display: flex; /* 정렬을 위해 flex 사용 */
+				flex-direction: column; /* 수직 정렬 */
+				align-items: flex-end; /* 내부 요소를 오른쪽으로 정렬 */
+				gap: 10px; /* 요소 간 간격 */
+				background-color: transparent; /* 겹침 방지를 위해 배경색 설정 */
+				padding: 10px; /* 여백 추가 */
+			}
+
+			/* 버튼 스타일 */
+			.btn-sm {
+				padding: 5px 10px;
+				font-size: 0.9rem;
+			}
+
 		</style>
+		<script>
+			// 수량 조정
+			function updateQuantity(index, change) {
+				const quantityElement = document.getElementById(`quantity-${index}`);
+				const selectedQuantityElement = document.getElementById(`selected-quantity-${index}`);
+				const reservInputQuantityElement = document.getElementById(`selected-quantity-reservation-${index}`);
+				const cartInputQuantityElement = document.getElementById(`selected-quantity-cart-${index}`);
+
+				
+				// 현재 남은 수량 가져오기
+				const availableQuantity = parseInt(quantityElement.innerText);
+				const selectedQuantity = parseInt(selectedQuantityElement.innerText);
+				
+				// 변경된 수량 계산
+				const newQuantity = selectedQuantity + change;
+				const restQuantity = availableQuantity - change
+				
+				if (newQuantity >= 0 && restQuantity>=0) {
+					selectedQuantityElement.innerText = newQuantity;
+					reservInputQuantityElement.value = newQuantity;
+					cartInputQuantityElement.value = newQuantity;
+					quantityElement.innerText = restQuantity;
+				}
+			}
+			let currentIndex; // 현재 예약한 책의 인덱스를 저장
+
+			// 모달 열기
+			function openPickupModal(index) {
+				currentIndex = index; // 현재 클릭한 카드의 인덱스를 저장
+				const modal = new bootstrap.Modal(document.getElementById(`pickupModal-${index}`));
+				modal.show();
+			}
+
+			// 픽업 시간 확인 버튼 클릭 시 동작
+			function cancelPickupModal(index) {
+				const modal = bootstrap.Modal.getInstance(document.getElementById(`pickupModal-${index}`));
+				modal.hide();
+			}
+		</script>
 	</head>
 	<body>
 		<!-- Navigation Bar -->
@@ -32,7 +100,7 @@
 					<a href="/main/reservation" class="btn btn-primary">예약
 						확인</a>
 					<a
-						href="/main/shopping_list"
+						href="/main/shoppingBasket"
 						class="btn btn-secondary"
 					>장바구니</a>
 				</div>
@@ -115,8 +183,8 @@
 				<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
 					{{#each searchResults}}
 					<div class="col">
-						<div class="card h-100 shadow-sm">
-							<div class="card-body">
+						<div class="card h-100 shadow-sm card-hover">
+							<div class="card-body d-flex flex-column">
 								<h4 class="card-title text-primary">{{Title}}</h4>
 								<p class="card-text">
 									<strong>작가:</strong> {{Author}}<br />
@@ -125,8 +193,54 @@
 									<strong>수상내역:</strong> {{Award}}<br />
 									<strong>연도:</strong> {{Year}}<br />
 									<strong>가격:</strong> {{Price}}$<br />
-									<strong>남은 수량:</strong> <span style="text-decoration: underline; color:rgb(20, 87, 220)">{{Quantity}}</span>
+									<strong>남은 수량:</strong> <span style="text-decoration: underline; color:rgb(20, 87, 220)" id="quantity-{{@index}}" class="quantity-value">{{Quantity}}</span>
 								</p>
+								<div class="hover-content">
+									<!-- 수량 조절 -->
+									<div class="d-flex align-items-center mt-auto">
+										<button 
+											class="btn btn-sm btn-outline-secondary" 
+											onclick="updateQuantity({{@index}}, -1)"
+										>-</button>
+										<span class="mx-2" id="selected-quantity-{{@index}}">0</span>
+										<button 
+											class="btn btn-sm btn-outline-secondary" 
+											onclick="updateQuantity({{@index}}, 1)"
+										>+</button>
+									</div>
+									<!-- 버튼 -->
+									<div class="d-flex align-items-center flex-start mt-3">
+										<form action="/main/reservation/addReservation" method="post" style="margin-right: 10px;">
+											<input type="hidden" name="ISBN" value="{{ISBN}}">
+											<input type="hidden" id="selected-quantity-reservation-{{@index}}" name="quantity" value="0">
+											<button type="button" class="btn btn-primary" onclick="openPickupModal({{@index}})">예약</button>
+											<!-- 모달 -->
+											<div class="modal fade" id="pickupModal-{{@index}}" tabindex="-1" aria-labelledby="pickupModalLabel" aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<h5 class="modal-title" id="pickupModalLabel">픽업 시간 입력</h5>
+															<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+														</div>
+														<div class="modal-body">
+															<label for="pickupTimeInput">픽업 시간을 입력하세요:</label>
+															<input type="datetime-local" name="pickupTimeInput" id="pickupTimeInput" class="form-control">
+														</div>
+														<div class="modal-footer">
+															<button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cancelPickupModal({{@index}})">취소</button>
+															<button type="submit" class="btn btn-primary">확인</button>
+														</div>
+													</div>
+												</div>
+											</div>
+										</form>
+										<form action="/main/shoppingBasket/addShoppingBasket" method="post">
+											<input type="hidden" name="ISBN" value="{{ISBN}}">
+											<input type="hidden" id="selected-quantity-cart-{{@index}}" name="quantity" value="0">
+											<button type="submit" class="btn btn-secondary">장바구니 담기</button>
+										</form>
+									</div>
+								</div>	
 							</div>
 						</div>
 					</div>

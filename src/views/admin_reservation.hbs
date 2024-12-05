@@ -88,6 +88,17 @@
 									required
 								/>
 							</div>
+							<div class="col-md-2">
+								<label for="Number" class="form-label"><b
+									>Number</b></label>
+								<input
+									type="text"
+									name="Number"
+									id="Number"
+									class="form-control"
+									required
+								/>
+							</div>
 						</div>
 						<div class="text-end">
 							<button
@@ -118,6 +129,7 @@
 								<th>Customer Email</th>
 								<th>Reservation Date</th>
 								<th>Pickup Time</th>
+								<th>Number</th>
 								<th>수정</th>
 								<th>삭제</th>
 							</tr>
@@ -142,17 +154,17 @@
 										</td>
 										<td>
 											<input
-												style="width: 120px;"
+												style="width: 120px; outline: none; box-shadow: none; border:none;background-color: transparent; "
 												type="text"
 												name="Book_ISBN"
 												class="form-control"
 												value="{{Book_ISBN}}"
+												readonly
 											/>
 										</td>
-										<td>
+										<td style="display:none;">
 											<input
-												type="text"
-												name="Customer_Email"
+												name="Customer_Email_origin"
 												class="form-control"
 												value="{{Customer_Email}}"
 											/>
@@ -160,6 +172,14 @@
 										<td>
 											<input
 												type="text"
+												name="Customer_Email_modify"
+												class="form-control"
+												value="{{Customer_Email}}"
+											/>
+										</td>
+										<td>
+											<input
+												type="datetime-local"
 												name="Reservation_date"
 												class="form-control"
 												value="{{Reservation_date}}"
@@ -167,10 +187,22 @@
 										</td>
 										<td>
 											<input
+												style="outline: none; box-shadow: none; border:none;background-color: transparent;"
 												type="text"
 												name="Pickup_time"
 												class="form-control"
 												value="{{Pickup_time}}"
+												readonly
+											/>
+										</td>
+										<td>
+											<input
+												style="outline: none; box-shadow: none; border:none;background-color: transparent;"
+												type="text"
+												name="Number"
+												class="form-control"
+												value="{{Number}}"
+												readonly
 											/>
 										</td>
 										<td>

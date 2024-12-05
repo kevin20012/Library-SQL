@@ -59,6 +59,7 @@
 							<th>예약 ID</th>
 							<th>ISBN</th>
 							<th>제목</th>
+                            <th>수량</th>
 							<th>예약일</th>
 							<th>픽업 날짜</th>
 							<th>상태</th>
@@ -77,14 +78,28 @@
                                             value="{{ID}}"
                                         /></td>
 									<td>{{ID}}</td>
+                                    <td style="display:none;"><input 
+                                            type="text"
+                                            name="ISBN"
+                                            class="form-control"
+                                            value="{{ISBN}}"
+                                        /></td>
 									<td>{{ISBN}}</td>
 									<td>{{Title}}</td>
+                                    <td style="display:none;"><input 
+                                            type="text"
+                                            name="Number"
+                                            class="form-control"
+                                            value="{{Number}}"
+                                        /></td>
+									<td>{{Number}}</td>
 									<td>{{Reservation_date}}</td>
-									<td><input
-												type="text"
+									<td><input {{#if (eq status "confirmed")}} style="outline: none; box-shadow: none; border:none;background-color: transparent;" {{/if}}
+												type="datetime-local"
 												name="Pickup_time_modify"
 												class="form-control"
 												value="{{Pickup_time}}"
+												{{#if (eq status "confirmed")}} readonly {{/if}}
 											/>
 									<td>
 										{{#if (eq status "confirmed")}}

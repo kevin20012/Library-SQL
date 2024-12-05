@@ -101,12 +101,12 @@ function myRouter(router, entity) {
 			const datas = entity_info.data;
 
 			let startPage;
-			if (search_info.currentPage % 10 === 0) {
-				startPage = search_info.currentPage - 9;
+			if (entity_info.currentPage % 10 === 0) {
+				startPage = entity_info.currentPage - 9;
 			} else {
 				startPage =
-					search_info.currentPage -
-					(search_info.currentPage % 10) +
+					entity_info.currentPage -
+					(entity_info.currentPage % 10) +
 					1;
 			}
 
@@ -190,7 +190,6 @@ router.post("/customer/insert", async (req, res) => {
 //삭제
 router.post("/customer/delete", async (req, res) => {
 	const key = req.body.email_origin;
-	console.log("delete :", key);
 
 	const result = await deleteSql.deleteCustomer(key);
 
@@ -209,7 +208,6 @@ router.post("/customer/delete", async (req, res) => {
 //수정
 router.post("/customer/update", async (req, res) => {
 	const data = req.body;
-	console.log("update :", data);
 
 	const result = await updateSql.updateCustomer(data);
 
@@ -257,7 +255,6 @@ router.post("/book/insert", async (req, res) => {
 //삭제
 router.post("/book/delete", async (req, res) => {
 	const key = req.body.ISBN_origin;
-	console.log("delete :", key);
 
 	const result = await deleteSql.deleteBook(key);
 
@@ -276,7 +273,6 @@ router.post("/book/delete", async (req, res) => {
 //수정
 router.post("/book/update", async (req, res) => {
 	const data = req.body;
-	console.log("update :", data);
 
 	const result = await updateSql.updateBook(data);
 
@@ -322,7 +318,6 @@ router.post("/author/insert", async (req, res) => {
 //삭제
 router.post("/author/delete", async (req, res) => {
 	const key = req.body.ID_origin;
-	console.log("delete :", key);
 
 	const result = await deleteSql.deleteAuthor(key);
 
@@ -497,6 +492,7 @@ router.post("/reservation/insert", async (req, res) => {
 		ID: input.ID,
 		Reservation_date: input.Reservation_date,
 		Pickup_time: input.Pickup_time,
+		Number: input.Number,
 	};
 
 	const result = await insertSql.insertReservation(data);
@@ -515,10 +511,14 @@ router.post("/reservation/insert", async (req, res) => {
 });
 //삭제
 router.post("/reservation/delete", async (req, res) => {
-	const key = req.body.ID_origin;
-	console.log("delete :", key);
+	const input = req.body;
+	const data = {
+		ID: input.ID_origin,
+		Book_ISBN: input.Book_ISBN,
+		Number: input.Number,
+	};
 
-	const result = await deleteSql.deleteReservation(key);
+	const result = await deleteSql.deleteReservation(data);
 
 	if (result.success === true) {
 		res.send(`<script>
@@ -551,7 +551,7 @@ router.post("/reservation/update", async (req, res) => {
 		</script>`);
 	}
 });
-// ----------------------------Shopping_basket----------------------------
+// ----------------------------Shopping_basket & Contains----------------------------
 //보여주기
 myRouter(router, "shoppingBasket");
 // 추가
@@ -561,6 +561,8 @@ router.post("/shoppingBasket/insert", async (req, res) => {
 		BasketID: input.BasketID,
 		Order_date: input.Order_date,
 		Customer_Email: input.Customer_Email,
+		Book_ISBN: input.Book_ISBN,
+		Number: input.Number,
 	};
 
 	const result = await insertSql.insertShoppingBasket(data);
@@ -579,10 +581,14 @@ router.post("/shoppingBasket/insert", async (req, res) => {
 });
 //삭제
 router.post("/shoppingBasket/delete", async (req, res) => {
-	const key = req.body.BasketID_origin;
-	console.log("delete :", key);
+	const input = req.body;
+	const data = {
+		BasketID: input.BasketID_origin,
+		Book_ISBN: input.Book_ISBN,
+		Number: input.Number,
+	};
 
-	const result = await deleteSql.deleteShoppingBasket(key);
+	const result = await deleteSql.deleteShoppingBasket(data);
 
 	if (result.success === true) {
 		res.send(`<script>

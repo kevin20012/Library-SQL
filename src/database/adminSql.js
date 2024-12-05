@@ -98,7 +98,7 @@ export const selectSql = {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time from Reservation LIMIT ? OFFSET ? for update`;
+			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Number from Reservation LIMIT ? OFFSET ? for update`;
 			const sql2 = `select count(*) as totalCount from Reservation for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
 			const [result2] = await promisePool.query(sql2);
@@ -114,9 +114,13 @@ export const selectSql = {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select BasketID, DATE_FORMAT(Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, Customer_Email from Shopping_basket LIMIT ? OFFSET ? for update`;
+			const sql = `select s.BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, s.Customer_Email, c.Book_ISBN, c.Number 
+			from Shopping_basket s
+			JOIN Contains c ON s.BasketID = c.Shopping_basket_BasketID
+			LIMIT ? OFFSET ? for update`;
 			const sql2 = `select count(*) as totalCount from Shopping_basket for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
+			console.log(result);
 			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
 			return [result, result2];
@@ -381,6 +385,7 @@ export const insertSql = {
 	/* 
         reservation insert 시 고려사항
         - 같은 key 존재 여부 확인
+		- inventory에서 책 빼오기
     */
 	//점검 완료
 	insertReservation: async (data) => {
@@ -391,15 +396,20 @@ export const insertSql = {
 			//이미 존재하는 key인지 체크
 			const check_sql = `select count(*) as totalCount from Reservation where ID = ? for update`;
 			const [checkResult] = await promisePool.query(check_sql, [data.ID]);
-			//check2
+			//존재하는 책인지 체크
 			const check_sql2 = `select count(*) as totalCount from Book where ISBN=? for update`;
 			const [checkResult2] = await promisePool.query(check_sql2, [
 				data.Book_ISBN,
 			]);
-			//check3
+			//존재하는 customer인지 체크
 			const check_sql3 = `select count(*) as totalCount from Customer where Email=? for update`;
 			const [checkResult3] = await promisePool.query(check_sql3, [
 				data.Customer_Email,
+			]);
+			//책의 수량이 충분한지 체크
+			const check_sql4 = `select Warehouse_Code, Number from Inventory where Book_ISBN=? for update`;
+			const [checkResult4] = await promisePool.query(check_sql4, [
+				data.Book_ISBN,
 			]);
 
 			if (checkResult[0].totalCount !== 0) {
@@ -411,26 +421,52 @@ export const insertSql = {
 			if (checkResult3[0].totalCount === 0) {
 				throw new Error(`추가하고자 하는 구매자가 존재하지 않습니다!`);
 			}
-
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0 &&
-				checkResult3[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Reservation (Book_ISBN, Customer_Email, ID, Reservation_date, Pickup_time) VALUES (?,?,?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Book_ISBN,
-					data.Customer_Email,
-					data.ID,
-					data.Reservation_date,
-					data.Pickup_time,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
+			let totalBookCount = 0;
+			checkResult4.forEach((item) => {
+				totalBookCount += item.Number;
+			});
+			if (totalBookCount < data.Number) {
+				throw new Error(
+					"추가하고자 하는 책의 수량만큼 창고에 책이 존재하지 않습니다!"
+				);
 			}
+			//모든 warehouse를 순회하며 책을 개수만큼 제거함.
+			let curBookCount = data.Number;
+			let minusSql;
+			let minusResult;
+			for (const warehouse of checkResult4) {
+				console.log(warehouse);
+				console.log(curBookCount);
+				if (warehouse.Number > curBookCount) {
+					minusSql = `update inventory set Number = ? where Warehouse_Code=? and Book_ISBN=?`;
+					[minusResult] = await promisePool.query(minusSql, [
+						warehouse.Number - curBookCount,
+						warehouse.Warehouse_Code,
+						data.Book_ISBN,
+					]);
+					break;
+				} else {
+					minusSql = `update inventory set Number = ? where Warehouse_Code=? and Book_ISBN=?`;
+					[minusResult] = await promisePool.query(minusSql, [
+						0,
+						warehouse.Warehouse_Code,
+						data.Book_ISBN,
+					]);
+					curBookCount -= warehouse.Number;
+				}
+			}
+			//execute
+			const sql = `INSERT INTO Reservation (Book_ISBN, Customer_Email, ID, Reservation_date, Pickup_time, Number) VALUES (?,?,?,?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Book_ISBN,
+				data.Customer_Email,
+				data.ID,
+				data.Reservation_date,
+				data.Pickup_time,
+				data.Number,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -440,6 +476,7 @@ export const insertSql = {
 	/* 
         Shopping_basket insert 시 고려사항
         - 같은 key 존재 여부 확인
+		- inventory에서 책 빼오기
     */
 	//점검 완료
 	insertShoppingBasket: async (data) => {
@@ -457,6 +494,16 @@ export const insertSql = {
 			const [checkResult2] = await promisePool.query(check_sql2, [
 				data.Customer_Email,
 			]);
+			//책이 존재하는지 확인
+			const check_sq3 = `select count(*) as totalCount from Book where ISBN = ? for update`;
+			const [checkResult3] = await promisePool.query(check_sq3, [
+				data.Book_ISBN,
+			]);
+			//책의 수량이 충분한지 체크
+			const check_sql4 = `select Warehouse_Code, Number from Inventory where Book_ISBN=? for update`;
+			const [checkResult4] = await promisePool.query(check_sql4, [
+				data.Book_ISBN,
+			]);
 
 			if (checkResult[0].totalCount !== 0) {
 				throw new Error(`같은 BasketID를 가진 장바구니가 존재합니다!`);
@@ -464,23 +511,59 @@ export const insertSql = {
 			if (checkResult2[0].totalCount === 0) {
 				throw new Error(`추가하고자 하는 구매자가 존재하지 않습니다!`);
 			}
-
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Shopping_basket (BasketID, Order_date, Customer_Email) VALUES (?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.BasketID,
-					data.Order_date,
-					data.Customer_Email,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
+			if (checkResult3[0].totalCount === 0) {
+				throw new Error(`추가하고자 하는 책이 존재하지 않습니다!`);
 			}
+			let totalBookCount = 0;
+			checkResult4.forEach((item) => {
+				totalBookCount += item.Number;
+			});
+			if (totalBookCount < data.Number) {
+				throw new Error(
+					"추가하고자 하는 책의 수량만큼 창고에 책이 존재하지 않습니다!"
+				);
+			}
+			//모든 warehouse를 순회하며 책을 개수만큼 제거함.
+			let curBookCount = data.Number;
+			let minusSql;
+			let minusResult;
+			for (const warehouse of checkResult4) {
+				console.log(warehouse);
+				console.log(curBookCount);
+				if (warehouse.Number > curBookCount) {
+					minusSql = `update inventory set Number = ? where Warehouse_Code=? and Book_ISBN=?`;
+					[minusResult] = await promisePool.query(minusSql, [
+						warehouse.Number - curBookCount,
+						warehouse.Warehouse_Code,
+						data.Book_ISBN,
+					]);
+					break;
+				} else {
+					minusSql = `update inventory set Number = ? where Warehouse_Code=? and Book_ISBN=?`;
+					[minusResult] = await promisePool.query(minusSql, [
+						0,
+						warehouse.Warehouse_Code,
+						data.Book_ISBN,
+					]);
+					curBookCount -= warehouse.Number;
+				}
+			}
+
+			//execute
+			const sql = `INSERT INTO Shopping_basket (BasketID, Order_date, Customer_Email) VALUES (?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.BasketID,
+				data.Order_date,
+				data.Customer_Email,
+			]);
+			const sql2 = `INSERT INTO Contains (Book_ISBN, Shopping_basket_BasketID, Number) VALUES (?,?,?)`;
+			const [result2] = await promisePool.query(sql2, [
+				data.Book_ISBN,
+				data.BasketID,
+				data.Number,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -913,21 +996,37 @@ export const deleteSql = {
 	},
 	/* 
         Reservation 삭제시 함께 고려해야할 사항
-        - 없음
+        - 창고에 책 다시 돌려놓기
     */
 	//점검 완료
-	deleteReservation: async (key) => {
+	deleteReservation: async (data) => {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
 			const check_sql = `select count(*) as totalCount from Reservation where ID=? for update`;
-			const [checkResult] = await promisePool.query(check_sql, [key]);
+			const [checkResult] = await promisePool.query(check_sql, [data.ID]);
+			//해당 책이 있던 창고 알아오기
+			const check_sql2 = `select Warehouse_Code, Number from inventory where Book_ISBN=? for update`;
+			const [checkResult2] = await promisePool.query(check_sql2, [
+				data.Book_ISBN,
+			]);
 
 			if (checkResult[0].totalCount === 1) {
+				//창고로 책 되돌려 놓기
+				const pickOneWare =
+					checkResult2[
+						Math.floor(Math.random() * checkResult2.length)
+					];
+				const sql = `update inventory set Number=? where Warehouse_Code=? and Book_ISBN=?`;
+				const [result] = await promisePool.query(sql, [
+					Number(pickOneWare.Number) + Number(data.Number),
+					pickOneWare.Warehouse_Code,
+					data.Book_ISBN,
+				]);
 				//execute
-				const sql = `delete from Reservation where ID=?`;
-				const [result] = await promisePool.query(sql, [key]);
+				const sql2 = `delete from Reservation where ID=?`;
+				const [result2] = await promisePool.query(sql2, [data.ID]);
 				await promisePool.query(`commit;`);
 				return { success: true };
 			} else {
@@ -942,27 +1041,53 @@ export const deleteSql = {
 	/* 
         Shopping_basket 삭제시 함께 고려해야할 사항
         - contains
+		- 창고에 책 다시 놀려놓기
     */
 	//점검 완료
-	deleteShoppingBasket: async (key) => {
+	deleteShoppingBasket: async (data) => {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
 			const check_sql = `select count(*) as totalCount from Shopping_basket where BasketID=? for update`;
-			const [checkResult] = await promisePool.query(check_sql, [key]);
+			const [checkResult] = await promisePool.query(check_sql, [
+				data.BasketID,
+			]);
 			//check2
 			const check_sql2 = `select count(*) as totalCount from Contains where Shopping_basket_BasketID=? for update`;
-			const [checkResult2] = await promisePool.query(check_sql2, [key]);
+			const [checkResult2] = await promisePool.query(check_sql2, [
+				data.BasketID,
+			]);
+			//해당 책이 있던 창고 알아오기
+			const check_sql3 = `select Warehouse_Code, Number from inventory where Book_ISBN=? for update`;
+			const [checkResult3] = await promisePool.query(check_sql3, [
+				data.Book_ISBN,
+			]);
 
 			if (checkResult[0].totalCount === 1) {
+				//창고로 책 되돌려 놓기
+				const pickOneWare =
+					checkResult3[
+						Math.floor(Math.random() * checkResult3.length)
+					];
+				const sql = `update inventory set Number=? where Warehouse_Code=? and Book_ISBN=?`;
+				const [result] = await promisePool.query(sql, [
+					Number(pickOneWare.Number) + Number(data.Number),
+					pickOneWare.Warehouse_Code,
+					data.Book_ISBN,
+				]);
+				//Contain 지우기
 				if (checkResult2[0].totalCount > 0) {
 					const sql2 = `delete from Contains where Shopping_basket_BasketID=?`;
-					const [result2] = await promisePool.query(sql2, [key]);
+					const [result2] = await promisePool.query(sql2, [
+						data.BasketID,
+					]);
 				}
-				//execute
-				const sql = `delete from Shopping_basket where BasketID=?`;
-				const [result] = await promisePool.query(sql, [key]);
+				//Shopping_basket 지우기
+				const sql3 = `delete from Shopping_basket where BasketID=?`;
+				const [result3] = await promisePool.query(sql3, [
+					data.BasketID,
+				]);
 				await promisePool.query(`commit;`);
 				return { success: true };
 			} else {
@@ -1465,18 +1590,27 @@ export const updateSql = {
 			const [checkResult] = await promisePool.query(check_sql, [
 				data.ID_modify,
 			]);
+			//변경하려는 email 있는지 체크
+			const check_sql2 = `select count(*) as totalCount from Customer where Email=? for update`;
+			const [checkResult2] = await promisePool.query(check_sql2, [
+				data.Customer_Email_modify,
+			]);
+
 			let flag = 0;
 			if (data.ID_origin !== data.ID_modify) {
 				flag = 0;
 			} else {
 				flag = 1;
 			}
+			if (checkResult2[0].totalCount === 0) {
+				throw new Error("변경하려고하는 customer가 없습니다!");
+			}
 			if (checkResult[0].totalCount === flag) {
 				//Reservation 수정
 				const sql = `update Reservation set Book_ISBN=?, Customer_Email=?, ID=?, Reservation_date=?, Pickup_time=? where ID=?`;
 				const [result] = await promisePool.query(sql, [
 					data.Book_ISBN,
-					data.Customer_Email,
+					data.Customer_Email_modify,
 					data.ID_modify,
 					data.Reservation_date,
 					data.Pickup_time,
@@ -1503,11 +1637,17 @@ export const updateSql = {
 		try {
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			//check 변경하려는 id가 있는지 체크
+			//변경하려는 id가 있는지 체크
 			const check_sql = `select count(*) as totalCount from Shopping_basket where BasketID=? for update`;
 			const [checkResult] = await promisePool.query(check_sql, [
 				data.BasketID_modify,
 			]);
+			//변경하려는 email 있는지 체크
+			const check_sql2 = `select count(*) as totalCount from Customer where Email=? for update`;
+			const [checkResult2] = await promisePool.query(check_sql2, [
+				data.Customer_Email_modify,
+			]);
+
 			let flag = 0;
 			if (data.BasketID_origin !== data.BasketID_modify) {
 				flag = 0;
@@ -1515,12 +1655,27 @@ export const updateSql = {
 				flag = 1;
 			}
 
+			if (checkResult[0].totalCount === 0) {
+				throw new Error("변경하려고하는 장바구니가 없습니다!");
+			}
+			if (checkResult2[0].totalCount === 0) {
+				throw new Error("변경하려고하는 customer가 없습니다!");
+			}
+
 			if (checkResult[0].totalCount === flag) {
-				const sql = `update Shopping_basket set BasketID=?, Order_date=?, Customer_Email = ? where BasketID=?`;
+				//Contains 수정
+				const sql = `update Contains set Book_ISBN=?, Shopping_basket_BasketID=? where Shopping_basket_BasketID=?`;
 				const [result] = await promisePool.query(sql, [
+					data.Book_ISBN,
 					data.BasketID_modify,
-					data.Order_date,
-					data.Customer_Email,
+					data.BasketID_origin,
+				]);
+				//Shopping_basket 수정
+				const sql2 = `update Shopping_basket set BasketID=?, Order_date=?, Customer_Email = ? where BasketID=?`;
+				const [result2] = await promisePool.query(sql2, [
+					data.BasketID_modify,
+					data.Order_date_modify,
+					data.Customer_Email_modify,
 					data.BasketID_origin,
 				]);
 

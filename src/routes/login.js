@@ -8,20 +8,26 @@ router.get("/", (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-	const body = req.body;
-	const user = await loginSql.getLoginCustomer(body.id, body.password);
+	// const body = req.body;
+	// const user = await loginSql.getLoginCustomer(body.id, body.password);
 
-	if (user.length !== 0) {
-		req.session.user = {
-			id: user[0].Email,
-			role: user[0].Role,
-			checkLogin: true,
-		};
-	}
-	//delete after
+	// if (user.length !== 0) {
+	// 	req.session.user = {
+	// 		id: user[0].Email,
+	// 		role: user[0].Role,
+	// 		checkLogin: true,
+	// 	};
+	// }
+	// delete after
+	req.session.user = {
+		id: "kevin@naver.com",
+		role: "Customer",
+		checkLogin: true,
+	};
+
 	// req.session.user = {
-	// 	id: "test",
-	// 	role: "Customer",
+	// 	id: "admin",
+	// 	role: "Administrator",
 	// 	checkLogin: true,
 	// };
 
