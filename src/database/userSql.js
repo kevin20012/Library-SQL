@@ -117,6 +117,40 @@ export const selectSql = {
 			return { success: false, error: error.message };
 		}
 	},
+	getPurchaseHistory: async (email, limit, offset) => {
+		try {
+			const sql = `select s.BasketID AS BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, Count(*) OVER() AS totalCount
+            from Shopping_basket s
+            where s.Customer_Email != 'admin' and s.Customer_Email= ? and s.Order_date is not null LIMIT ? OFFSET ?`;
+
+			const [result] = await promisePool.query(sql, [
+				email,
+				limit,
+				offset,
+			]);
+
+			return [result];
+		} catch (error) {
+			console.log(error);
+			return { success: false, error: error.message };
+		}
+	},
+	getOrderDetails: async (data) => {
+		try {
+			const sql = `select c.Book_ISBN AS Book_ISBN, b.Title AS Title, c.Number AS Number, b.Price AS Price 
+			from Shopping_basket s
+			JOIN Contains c ON s.BasketID = c.Shopping_basket_BasketID
+			JOIN Book b ON b.ISBN = c.Book_ISBN
+			WHERE s.BasketID = ?`;
+
+			const [result] = await promisePool.query(sql, [data.BasketID]);
+
+			return { success: true, books: result };
+		} catch (error) {
+			console.log(error);
+			return { success: false, error: error.message };
+		}
+	},
 };
 
 export const updateSql = {
@@ -128,6 +162,10 @@ export const updateSql = {
 			await promisePool.query(`start transaction;`);
 
 			const pickUpDateTime = new Date(data.pickupTime.replace(" ", "T"));
+			const today = new Date();
+			if (pickUpDateTime < today) {
+				throw new Error("지금보다 과거로는 픽업이 불가합니다!");
+			}
 			const tenMinuteBefore = new Date(
 				pickUpDateTime.getTime() - 10 * 1000 * 60
 			);

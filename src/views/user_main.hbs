@@ -101,8 +101,9 @@
 						확인</a>
 					<a
 						href="/main/shoppingBasket"
-						class="btn btn-secondary"
+						class="btn btn-success"
 					>장바구니</a>
+					<a href="/main/purchaseHistory" class="btn btn-secondary">구매이력</a>
 				</div>
 			</div>
 		</nav>
@@ -237,7 +238,7 @@
 										<form action="/main/shoppingBasket/addShoppingBasket" method="post">
 											<input type="hidden" name="ISBN" value="{{ISBN}}">
 											<input type="hidden" id="selected-quantity-cart-{{@index}}" name="quantity" value="0">
-											<button type="submit" class="btn btn-secondary">장바구니 담기</button>
+											<button type="submit" class="btn btn-success">장바구니 담기</button>
 										</form>
 									</div>
 								</div>	

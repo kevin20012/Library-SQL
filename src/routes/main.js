@@ -71,6 +71,12 @@ const getInfoFromTable = async (arg, req, res) => {
 				limit,
 				offset
 			);
+		} else if (arg.type === "purchaseHistory") {
+			[datas] = await selectSql.getPurchaseHistory(
+				arg.email,
+				limit,
+				offset
+			);
 		}
 		let totalCount;
 		if (datas.length === 0) {
@@ -427,8 +433,86 @@ router.post("/shoppingBasket/purchase", async (req, res) => {
 	if (result.success === true) {
 		res.status(200).send("구매완료");
 	} else {
-		res.status(400).send("구매실패");
+		res.status(500).send("구매실패");
 	}
 });
 
+//구매이력 확인 페이지
+router.get("/purchaseHistory", async (req, res) => {
+	if (
+		req.session.user !== undefined &&
+		req.session.user.role === "Customer"
+	) {
+		const arg = {
+			type: "purchaseHistory",
+			email: req.session.user.id,
+		};
+		const purchaseHistory = await getInfoFromTable(arg, req, res);
+		console.log(purchaseHistory);
+		let datas = purchaseHistory.data;
+
+		let startPage;
+		if (purchaseHistory.currentPage % 10 === 0) {
+			startPage = purchaseHistory.currentPage - 9;
+		} else {
+			startPage =
+				purchaseHistory.currentPage -
+				(purchaseHistory.currentPage % 10) +
+				1;
+		}
+
+		const endPage = startPage + 9;
+		let prevPage = 0,
+			nextPage = 0;
+		if (startPage - 2 < 1) {
+			prevPage = 1;
+		} else {
+			prevPage = startPage - 2;
+		}
+		if (endPage + 1 > purchaseHistory.totalPages) {
+			nextPage = purchaseHistory.totalPages;
+		} else {
+			nextPage = endPage + 1;
+		}
+		const pageInfo = {
+			currentPage: purchaseHistory.currentPage,
+			startPage: startPage,
+			endPage: endPage,
+			totalPages: purchaseHistory.totalPages,
+			totalCount: purchaseHistory.totalCount,
+			prevPage: prevPage,
+			nextPage: nextPage,
+		};
+		// console.log(datas);
+		// console.log(pageInfo.totalPages);
+		// console.log(pageInfo.endPage);
+		if (pageInfo.totalPages < pageInfo.endPage)
+			pageInfo.endPage = pageInfo.totalPages;
+		res.render("user_purchaseHistory", {
+			user: {
+				name: name[0].Name,
+			},
+			orders: datas,
+			Page: range(pageInfo.startPage, pageInfo.endPage + 1),
+			pageInfo: pageInfo,
+		});
+	} else {
+		res.redirect("/");
+	}
+});
+router.post("/purchaseHistory/details", async (req, res) => {
+	const input = req.body;
+
+	const data = {
+		BasketID: input.BasketID,
+	};
+
+	const result = await selectSql.getOrderDetails(data);
+	console.log(result.books);
+	if (result.success === true) {
+		res.status(200).json({ books: result.books });
+	} else {
+		res.status(500).send("서버로부터 구매이력을 불러오지 못했습니다.");
+	}
+});
 module.exports = router;
