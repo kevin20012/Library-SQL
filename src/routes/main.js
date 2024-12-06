@@ -16,7 +16,11 @@ function ceil(number, fix) {
 
 const router = express.Router();
 
-let name = "";
+let name;
+let query = "";
+let page = 1;
+let option = "book";
+
 function range(start, end) {
 	let array = [];
 	for (let i = start; i < end; ++i) {
@@ -33,12 +37,9 @@ router.get("/", async (req, res) => {
 	) {
 		name = await selectSql.getName(req.session.user.id);
 
-		res.render("user_main", {
-			user: {
-				name: name[0].Name,
-			},
-			option: "book",
-		});
+		res.redirect(
+			`/main/search?page=${page}&query=${query}&option=${option}`
+		);
 	} else {
 		res.redirect("/");
 	}
@@ -106,11 +107,11 @@ router.get("/search", async (req, res) => {
 		req.session.user !== undefined &&
 		req.session.user.role === "Customer"
 	) {
-		let option = req.query.option;
+		option = req.query.option;
 		if (option === undefined) {
 			option = "book";
 		}
-		let query = req.query.query;
+		query = req.query.query;
 		const arg = {
 			type: "search",
 			option: option,
@@ -119,6 +120,7 @@ router.get("/search", async (req, res) => {
 
 		const search_info = await getInfoFromTable(arg, req, res);
 		const datas = search_info.data;
+		page = search_info.currentPage;
 
 		let startPage;
 		if (search_info.currentPage % 10 === 0) {
@@ -154,6 +156,7 @@ router.get("/search", async (req, res) => {
 		if (pageInfo.totalPages < pageInfo.endPage)
 			pageInfo.endPage = pageInfo.totalPages;
 		console.log(pageInfo);
+		console.log(datas);
 
 		res.render("user_main", {
 			user: {
