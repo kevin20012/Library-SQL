@@ -34,7 +34,7 @@ export const selectSql = {
 				const sql = `SELECT 
                     b.ISBN AS ISBN, 
                     b.Category AS Category, 
-                    MAX(aw.Name) AS Award,
+                    IFNULL(GROUP_CONCAT(DISTINCT aw.Name ORDER BY aw.Name SEPARATOR ', '), '-') AS Awards, 
                     b.Title AS Title, 
                     a.Name AS Author, 
                     b.Year, 
