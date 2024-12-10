@@ -8,6 +8,10 @@ import {
 
 const router = express.Router();
 
+const hbs = require("hbs");
+
+hbs.registerHelper("eq", (a, b) => a === b);
+
 function range(start, end) {
 	let array = [];
 	for (let i = start; i < end; ++i) {

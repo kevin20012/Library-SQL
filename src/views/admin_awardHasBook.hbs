@@ -91,7 +91,7 @@
 							<a class="page-link" href="/admin/awardHasBook?page={{pageInfo.prevPage}}">이전</a>
 						</li>
 						{{#each Page}}
-							<li class="page-item">
+							<li class="page-item {{#if (eq this ../pageInfo.currentPage)}}active{{/if}}">
 								<a class="page-link" href="/admin/awardHasBook?page={{this}}">{{this}}</a>
 							</li>
 						{{/each}}

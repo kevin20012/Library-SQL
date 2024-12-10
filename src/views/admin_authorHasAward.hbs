@@ -151,7 +151,7 @@
 							{{#each Page}}
 								<li class="page-item">
 									<a
-										class="page-link"
+										class="page-link {{#if (eq this ../pageInfo.currentPage)}}active{{/if}}"
 										href="/admin/authorHasAward?page={{this}}"
 									>{{this}}</a>
 								</li>

@@ -188,7 +188,7 @@
 								>이전</a>
 							</li>
 							{{#each Page}}
-								<li class="page-item">
+								<li class="page-item {{#if (eq this ../pageInfo.currentPage)}}active{{/if}}">
 									<a
 										class="page-link"
 										href="/admin/customer?page={{this}}"
