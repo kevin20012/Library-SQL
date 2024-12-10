@@ -27,7 +27,7 @@
 					<h2 class="card-title mb-4">추가하기</h2>
 					<form method="post" action="/admin/reservation/insert">
 						<div class="row mb-3">
-							<div class="col-md-2">
+							<div class="col-md">
 								<label for="ID" class="form-label"><b
 									>ID</b></label>
 								<input
@@ -39,7 +39,7 @@
 									required
 								/>
 							</div>
-							<div class="col-md-2">
+							<div class="col-md">
 								<label for="Book_ISBN" class="form-label"><b
 									>Book ISBN</b></label>
 								<input
@@ -51,44 +51,45 @@
 									required
 								/>
 							</div>
-							<div class="col-md-3">
+							<div class="col-md-2">
 								<label
 									for="Customer_Email"
 									class="form-label"
 								><b>Customer Email</b></label>
 								<input
-									type="text"
+									type="email"
+									placeholder="example@example.com"
 									name="Customer_Email"
 									id="Customer_Email"
 									class="form-control"
 									required
 								/>
 							</div>
-							<div class="col-md-2">
+							<div class="col-md">
 								<label
 									for="Reservation_date"
 									class="form-label"
 								><b>Reservation Date</b></label>
 								<input
-									type="text"
+									type="datetime-local"
 									name="Reservation_date"
 									id="Reservation_date"
 									class="form-control"
 									required
 								/>
 							</div>
-							<div class="col-md-2">
+							<div class="col-md">
 								<label for="Pickup_time" class="form-label"><b
 									>Pickup Time</b></label>
 								<input
-									type="text"
+									type="datetime-local"
 									name="Pickup_time"
 									id="Pickup_time"
 									class="form-control"
 									required
 								/>
 							</div>
-							<div class="col-md-2">
+							<div class="col-md">
 								<label for="Number" class="form-label"><b
 									>Number</b></label>
 								<input

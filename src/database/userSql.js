@@ -361,6 +361,9 @@ export const deleteSql = {
 export const insertSql = {
 	insertReservation: async (data) => {
 		try {
+			if (data.quantity <= 0) {
+				throw new Error("1개 이상부터 예약이 가능합니다!");
+			}
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -473,6 +476,9 @@ export const insertSql = {
 	},
 	insertShoppingBasket: async (data) => {
 		try {
+			if (data.quantity <= 0) {
+				throw new Error("1개 이상부터 추가가 가능합니다!");
+			}
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check

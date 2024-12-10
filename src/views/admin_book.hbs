@@ -53,7 +53,10 @@
 								<label for="Price" class="form-label"><b
 									>Price</b></label>
 								<input
-									type="text"
+									type="number"
+									min="0.01"
+									step="0.01"
+									placeholder="ex. 10.99"
 									name="Price"
 									id="Price"
 									class="form-control"
@@ -75,7 +78,9 @@
 								<label for="Year" class="form-label"><b
 									>Year</b></label>
 								<input
-									type="text"
+									type="number"
+									min="1900"
+									max="2100"
 									name="Year"
 									id="Year"
 									class="form-control"
@@ -150,7 +155,9 @@
 												value="{{Category}}"
 											/></td>
 										<td><input
-												type="text"
+												type="number"
+												min="0.01"
+												step="0.01"
 												name="Price"
 												class="form-control"
 												value="{{Price}}"
@@ -162,7 +169,9 @@
 												value="{{Title}}"
 											/></td>
 										<td><input
-												type="text"
+												type="number"
+												min="1900"
+												max="2100"
 												name="Year"
 												class="form-control"
 												value="{{Year}}"
