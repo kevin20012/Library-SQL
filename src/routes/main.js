@@ -426,7 +426,6 @@ router.post("/shoppingBasket/delete", async (req, res) => {
 });
 router.post("/shoppingBasket/purchase", async (req, res) => {
 	const input = req.body;
-	console.log(input);
 	const data = {
 		BasketID: input.BasketID,
 	};

@@ -116,18 +116,30 @@
 										{{/if}}
 									</td>
 									<td>
-										<button
-											type="submit"
-											class="btn btn-warning"
-											formaction="/main/reservation/pickupTimeModify"
-										>수정</button>
+										{{#if (eq status "confirmed")}}
+											<span
+												class="badge bg-secondary"
+											>불가</span>
+										{{else}}
+											<button
+												type="submit"
+												class="btn btn-warning"
+												formaction="/main/reservation/pickupTimeModify"
+											>수정</button>
+										{{/if}}
 									</td>
 									<td>
-										<button
-											type="submit"
-											class="btn btn-danger"
-											formaction="/main/reservation/delete"
-										>삭제</button>
+										{{#if (eq status "confirmed")}}
+											<span
+												class="badge bg-secondary"
+											>불가</span>
+										{{else}}
+											<button
+												type="submit"
+												class="btn btn-danger"
+												formaction="/main/reservation/delete"
+											>삭제</button>
+										{{/if}}
 									</td>
 								</form>
 							</tr>

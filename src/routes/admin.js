@@ -33,53 +33,32 @@ const getInfoFromTable = async (tableName, req, res) => {
 
 		// 데이터 가져오기, 총 데이터 개수 조회
 		if (tableName === "customer") {
-			[datas, totalCountResult] = await selectSql.getCustomer(
-				limit,
-				offset
-			);
-			console.log(datas, totalCountResult);
+			[datas] = await selectSql.getCustomer(limit, offset);
+			console.log(datas);
 		} else if (tableName === "book") {
-			[datas, totalCountResult] = await selectSql.getBook(limit, offset);
+			[datas] = await selectSql.getBook(limit, offset);
 		} else if (tableName === "author") {
 			[datas, totalCountResult] = await selectSql.getAuthor(
 				limit,
 				offset
 			);
 		} else if (tableName === "award") {
-			[datas, totalCountResult] = await selectSql.getAward(limit, offset);
+			[datas] = await selectSql.getAward(limit, offset);
 		} else if (tableName === "warehouse") {
-			[datas, totalCountResult] = await selectSql.getWarehouse(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getWarehouse(limit, offset);
 		} else if (tableName === "reservation") {
-			[datas, totalCountResult] = await selectSql.getReservation(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getReservation(limit, offset);
 		} else if (tableName === "shoppingBasket") {
-			[datas, totalCountResult] = await selectSql.getShoppingBasket(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getShoppingBasket(limit, offset);
 		} else if (tableName === "inventory") {
-			[datas, totalCountResult] = await selectSql.getInventory(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getInventory(limit, offset);
 		} else if (tableName === "authorHasAward") {
-			[datas, totalCountResult] = await selectSql.getAuthorHasAward(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getAuthorHasAward(limit, offset);
 		} else if (tableName === "awardHasBook") {
-			[datas, totalCountResult] = await selectSql.getAwardHasBook(
-				limit,
-				offset
-			);
+			[datas] = await selectSql.getAwardHasBook(limit, offset);
 		}
 
-		const totalCount = totalCountResult[0].totalCount;
+		const totalCount = datas[0].totalCount;
 
 		// 총 페이지 수 계산
 		const totalPages = Math.ceil(totalCount / limit);
@@ -142,7 +121,7 @@ function myRouter(router, entity) {
 			console.log(datas);
 			res.render("admin_" + entity, {
 				Data: datas,
-				Page: range(pageInfo.startPage, pageInfo.endPage),
+				Page: range(pageInfo.startPage, pageInfo.endPage + 1),
 				pageInfo: pageInfo,
 			});
 		} else {

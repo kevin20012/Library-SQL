@@ -16,6 +16,10 @@ const promisePool = pool.promise();
 export const selectSql = {
 	getName: async (email) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			const sql = `select Name from Customer where Email= ? and Email != 'admin' for update`;
 
@@ -28,6 +32,11 @@ export const selectSql = {
 	},
 	getSearch: async (option, query, limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
+
 			let result = [];
 
 			if (option == "book") {
@@ -51,7 +60,7 @@ export const selectSql = {
 
 				[result] = await promisePool.query(sql, [query, limit, offset]);
 			} else if (option === "author") {
-				const sql = `SELECT b.ISBN AS ISBN, b.Category AS Category, MAX(aw.Name) AS Award, b.Title AS Title, a.Name AS Author, b.Year, b.Price, Sum(COALESCE(i.Number, 0)) AS Quantity, COUNT(*) OVER() AS totalCount
+				const sql = `SELECT b.ISBN AS ISBN, b.Category AS Category, IFNULL(GROUP_CONCAT(DISTINCT aw.Name ORDER BY aw.Name SEPARATOR ', '), '-') AS Awards,  b.Title AS Title, a.Name AS Author, b.Year, b.Price, Sum(COALESCE(i.Number, 0)) AS Quantity, COUNT(*) OVER() AS totalCount
 				FROM Book b
 				JOIN Author a ON b.Author_ID = a.ID
                 LEFT JOIN Award_has_Book ab ON b.ISBN = ab.Book_ISBN
@@ -61,7 +70,7 @@ export const selectSql = {
 
 				[result] = await promisePool.query(sql, [query, limit, offset]);
 			} else if (option === "award") {
-				const sql = `SELECT b.ISBN AS ISBN, b.Category AS Category, aw.Name AS Award, b.Title AS Title, a.Name AS Author, b.Year, b.Price, Sum(COALESCE(i.Number, 0)) AS Quantity, COUNT(*) OVER() AS totalCount
+				const sql = `SELECT b.ISBN AS ISBN, b.Category AS Category, IFNULL(GROUP_CONCAT(DISTINCT aw.Name ORDER BY aw.Name SEPARATOR ', '), '-') AS Awards,  b.Title AS Title, a.Name AS Author, b.Year, b.Price, Sum(COALESCE(i.Number, 0)) AS Quantity, COUNT(*) OVER() AS totalCount
 				FROM Book b
 				JOIN Author a ON b.Author_ID = a.ID
                 LEFT JOIN Award_has_Book ab ON b.ISBN = ab.Book_ISBN
@@ -80,6 +89,11 @@ export const selectSql = {
 	},
 	getReservation: async (email, limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
+
 			const sql = `select r.ID, r.Book_ISBN AS ISBN, b.Title AS Title, r.Number as Number, DATE_FORMAT(r.Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(r.Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Count(*) OVER() AS totalCount
             from Reservation r
             JOIN Book b ON r.Book_ISBN = b.ISBN
@@ -99,6 +113,11 @@ export const selectSql = {
 	},
 	getShoppingBasket: async (email, limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
+
 			const sql = `select s.BasketID AS BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, b.ISBN AS ISBN, b.Title AS Title, c.Number as Number, b.Price as Price, Count(*) OVER() AS totalCount
             from Shopping_basket s
             JOIN Contains c ON c.Shopping_basket_BasketID = s.BasketID
@@ -119,6 +138,11 @@ export const selectSql = {
 	},
 	getPurchaseHistory: async (email, limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
+
 			const sql = `select s.BasketID AS BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, Count(*) OVER() AS totalCount
             from Shopping_basket s
             where s.Customer_Email != 'admin' and s.Customer_Email= ? and s.Order_date is not null LIMIT ? OFFSET ?`;
@@ -137,6 +161,11 @@ export const selectSql = {
 	},
 	getOrderDetails: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
+
 			const sql = `select c.Book_ISBN AS Book_ISBN, b.Title AS Title, c.Number AS Number, b.Price AS Price 
 			from Shopping_basket s
 			JOIN Contains c ON s.BasketID = c.Shopping_basket_BasketID
@@ -158,6 +187,15 @@ export const updateSql = {
 		//다른 예약과 10분 차이 이상이 나는 경우에만 update 허용
 
 		try {
+			//isolation 레벨 변경
+			/*
+				10분 전후로 예약 시간이 없어야하는데 read 후 update 전에 다른 예약이 들어오게되면,
+				이를 막을 방법이 없어 serializable로 설정하였음.
+			*/
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ SERIALIZABLE;`
+			);
+
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 
@@ -202,12 +240,23 @@ export const updateSql = {
 	},
 	updateOrderDate: async (data) => {
 		try {
+			//isolation 레벨 변경
+			// * read uncommitted는 롤백된 데이터도 읽을 수 있어 위험함.
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
+			const sql = `select Order_date from Shopping_basket where BasketID = ?`;
+			const [result] = await promisePool.query(sql, [data.BasketID]);
+
+			if (result[0].Order_date !== null) {
+				throw new Error("이미 구매한 상품입니다..");
+			}
 
 			const orderDate = new Date();
-			const sql = `update Shopping_basket set Order_date = ? where BasketID = ?`;
-			const [result] = await promisePool.query(sql, [
+			const sql2 = `update Shopping_basket set Order_date = ? where BasketID = ?`;
+			const [result2] = await promisePool.query(sql2, [
 				format(orderDate, "yyyy-MM-dd HH:mm:ss"),
 				data.BasketID,
 			]);
@@ -228,6 +277,10 @@ export const deleteSql = {
     */
 	deleteReservation: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 
@@ -289,6 +342,10 @@ export const deleteSql = {
     */
 	deleteShoppingBasket: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 
@@ -361,6 +418,10 @@ export const deleteSql = {
 export const insertSql = {
 	insertReservation: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			if (data.quantity <= 0) {
 				throw new Error("1개 이상부터 예약이 가능합니다!");
 			}
@@ -427,7 +488,7 @@ export const insertSql = {
 			}
 			if (checkResult5[0].totalCount > 0) {
 				throw new Error(
-					"10분 전후로 픽업 예약자가 존재해 해당 시간으로 예약 수정이 불가합니다!"
+					"10분 전후로 픽업 예약자가 존재해 해당 시간으로 예약이 불가합니다!"
 				);
 			}
 			//모든 warehouse를 순회하며 책을 개수만큼 제거함.
@@ -476,6 +537,10 @@ export const insertSql = {
 	},
 	insertShoppingBasket: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;` //장바구니에서는 절대 id 중복이 일어나면 안되기 때문에!
+			);
 			if (data.quantity <= 0) {
 				throw new Error("1개 이상부터 추가가 가능합니다!");
 			}

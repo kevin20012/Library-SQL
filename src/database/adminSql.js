@@ -12,18 +12,26 @@ const pool = mysql.createPool({
 
 const promisePool = pool.promise();
 
-//점검 완료
+/*
+	=== Isolation level에 관하여... ===
+	read빼고는 모든 insert, delete, update 작업은 모두 
+	'관리자가 데이터를 수정 중에 다른 관리자가 동일한 데이터를 수정할 수 없어야한다.' 라는 요구사항에 따라 
+	isoloation level을 모두 serializable로 설정하였습니다.
+	=================================
+*/
 export const selectSql = {
 	getCustomer: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Customer where Email != 'admin' LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Customer where Email != 'admin' for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Customer where Email != 'admin' LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -32,14 +40,16 @@ export const selectSql = {
 	},
 	getBook: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Book LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Book for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Book LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -48,14 +58,16 @@ export const selectSql = {
 	},
 	getAuthor: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Author LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Author for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Author LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -64,14 +76,16 @@ export const selectSql = {
 	},
 	getAward: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Award LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Award for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Award LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -80,14 +94,16 @@ export const selectSql = {
 	},
 	getWarehouse: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Warehouse LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Warehouse for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Warehouse LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -96,14 +112,16 @@ export const selectSql = {
 	},
 	getReservation: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Number from Reservation LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Reservation for update`;
+			const sql = `select Book_ISBN, Customer_Email, ID, DATE_FORMAT(Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Number, COUNT(*) OVER() AS totalCount from Reservation LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -112,18 +130,19 @@ export const selectSql = {
 	},
 	getShoppingBasket: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select s.BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, s.Customer_Email, c.Book_ISBN, c.Number 
+			const sql = `select s.BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, s.Customer_Email, c.Book_ISBN, c.Number, COUNT(*) OVER() AS totalCount
 			from Shopping_basket s
-			JOIN Contains c ON s.BasketID = c.Shopping_basket_BasketID
+			LEFT JOIN Contains c ON s.BasketID = c.Shopping_basket_BasketID
 			LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Shopping_basket for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			console.log(result);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -132,14 +151,16 @@ export const selectSql = {
 	},
 	getInventory: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Inventory LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Inventory for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Inventory LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -148,14 +169,16 @@ export const selectSql = {
 	},
 	getAuthorHasAward: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Author_has_Award LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Author_has_Award for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Author_has_Award LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -164,14 +187,16 @@ export const selectSql = {
 	},
 	getAwardHasBook: async (limit, offset) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
-			const sql = `select * from Award_has_Book LIMIT ? OFFSET ? for update`;
-			const sql2 = `select count(*) as totalCount from Award_has_Book for update`;
+			const sql = `select *, COUNT(*) OVER() AS totalCount from Award_has_Book LIMIT ? OFFSET ? for update`;
 			const [result] = await promisePool.query(sql, [limit, offset]);
-			const [result2] = await promisePool.query(sql2);
 			await promisePool.query(`commit;`);
-			return [result, result2];
+			return [result];
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error);
@@ -181,9 +206,12 @@ export const selectSql = {
 };
 
 export const insertSql = {
-	//점검 완료
 	insertCustomer: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -192,22 +220,21 @@ export const insertSql = {
 				data.email,
 			]);
 
-			if (checkResult[0].totalCount === 0) {
-				//execute
-				const sql = `INSERT INTO Customer (Email, Phone, Address, Name, Role, Password) VALUES (?,?,?,?, 'Customer', ?)`;
-				const [result] = await promisePool.query(sql, [
-					data.email,
-					data.phone,
-					data.address,
-					data.name,
-					data.password,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				await promisePool.query(`commit;`);
+			if (checkResult[0].totalCount !== 0) {
 				throw new Error(`Already exist error!`);
 			}
+
+			//execute
+			const sql = `INSERT INTO Customer (Email, Phone, Address, Name, Role, Password) VALUES (?,?,?,?, 'Customer', ?)`;
+			const [result] = await promisePool.query(sql, [
+				data.email,
+				data.phone,
+				data.address,
+				data.name,
+				data.password,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -218,9 +245,13 @@ export const insertSql = {
         book insert 시 고려사항
         - Author id 존재 여부
     */
-	//점검 완료
+
 	insertBook: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -230,7 +261,7 @@ export const insertSql = {
 				data.ISBN,
 			]);
 			//작가의 id가 존재하는지 확인
-			const check_sql2 = `select count(*) as totalCount from Author where Author_ID=? for update`;
+			const check_sql2 = `select count(*) as totalCount from Author where ID=? for update`;
 			const [checkResult2] = await promisePool.query(check_sql2, [
 				data.Author_ID,
 			]);
@@ -241,25 +272,19 @@ export const insertSql = {
 			if (checkResult2[0].totalCount === 0) {
 				throw new Error(`존재하지 않는 Author_ID입니다!`);
 			}
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Book (ISBN, Category, Price, Title, Year, Author_ID) VALUES (?,?,?,?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.ISBN,
-					data.Category,
-					data.Price,
-					data.Title,
-					data.Year,
-					data.Author_ID,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+
+			//execute
+			const sql = `INSERT INTO Book (ISBN, Category, Price, Title, Year, Author_ID) VALUES (?,?,?,?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.ISBN,
+				data.Category,
+				data.Price,
+				data.Title,
+				data.Year,
+				data.Author_ID,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -270,9 +295,13 @@ export const insertSql = {
         Author insert 시 고려사항
         - 같은 id 존재 여부 확인
     */
-	//점검 완료
+
 	insertAuthor: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -286,20 +315,16 @@ export const insertSql = {
 				throw new Error(`같은 ID를 가진 작가가 존재합니다!`);
 			}
 
-			if (checkResult[0].totalCount === 0) {
-				//execute
-				const sql = `INSERT INTO Author (Name, URL, Address, ID) VALUES (?,?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Name,
-					data.URL,
-					data.Address,
-					data.ID,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Author (Name, URL, Address, ID) VALUES (?,?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Name,
+				data.URL,
+				data.Address,
+				data.ID,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -310,9 +335,13 @@ export const insertSql = {
         Award insert 시 고려사항
         - 같은 id 존재 여부 확인
     */
-	//점검 완료
+
 	insertAward: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -324,19 +353,15 @@ export const insertSql = {
 				throw new Error(`같은 ID를 가진 상이 존재합니다!`);
 			}
 
-			if (checkResult[0].totalCount === 0) {
-				//execute
-				const sql = `INSERT INTO Award (Name, Year, ID) VALUES (?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Name,
-					data.Year,
-					data.ID,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Award (Name, Year, ID) VALUES (?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Name,
+				data.Year,
+				data.ID,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -347,13 +372,17 @@ export const insertSql = {
         Warehouse insert 시 고려사항
         - 같은 code 존재 여부 확인
     */
-	//점검 완료
+
 	insertWarehouse: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
-			//이미 존재하는 isbn인지를 체크
+			//이미 존재하는 warehouse인지를 체크
 			const check_sql = `select count(*) as totalCount from Warehouse where Code=? for update`;
 			const [checkResult] = await promisePool.query(check_sql, [
 				data.Code,
@@ -363,19 +392,15 @@ export const insertSql = {
 				throw new Error(`같은 Code를 가진 창고가 존재합니다!`);
 			}
 
-			if (checkResult[0].totalCount === 0) {
-				//execute
-				const sql = `INSERT INTO Warehouse (Code, Phone, Address) VALUES (?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Code,
-					data.Phone,
-					data.Address,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Warehouse (Code, Phone, Address) VALUES (?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Code,
+				data.Phone,
+				data.Address,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -387,9 +412,13 @@ export const insertSql = {
         - 같은 key 존재 여부 확인
 		- inventory에서 책 빼오기
     */
-	//점검 완료
+
 	insertReservation: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -478,9 +507,13 @@ export const insertSql = {
         - 같은 key 존재 여부 확인
 		- inventory에서 책 빼오기
     */
-	//점검 완료
+
 	insertShoppingBasket: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -576,9 +609,13 @@ export const insertSql = {
         - warehouse_code 실존여부
         - Book_ISBN 실존여부
     */
-	//점검 완료
+
 	insertInventory: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -611,23 +648,15 @@ export const insertSql = {
 				throw new Error(`추가하고자 하는 책이 존재하지 않습니다!`);
 			}
 
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0 &&
-				checkResult3[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Inventory (Warehouse_Code, Book_ISBN, Number) VALUES (?,?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Warehouse_Code,
-					data.Book_ISBN,
-					data.Number,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Inventory (Warehouse_Code, Book_ISBN, Number) VALUES (?,?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Warehouse_Code,
+				data.Book_ISBN,
+				data.Number,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -638,9 +667,13 @@ export const insertSql = {
         Author_has_Award insert 시 고려사항
         - 같은 key 존재 여부 확인
     */
-	//점검 완료
+
 	insertAuthorHasAward: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -650,12 +683,12 @@ export const insertSql = {
 				data.Author_ID,
 				data.Award_ID,
 			]);
-			//check2
+			//존재하는 작가인지 체크
 			const check_sql2 = `select count(*) as totalCount from Author where ID=? for update`;
 			const [checkResult2] = await promisePool.query(check_sql2, [
 				data.Author_ID,
 			]);
-			//check2
+			//존재하는 상인지 체크
 			const check_sql3 = `select count(*) as totalCount from Award where ID=? for update`;
 			const [checkResult3] = await promisePool.query(check_sql3, [
 				data.Award_ID,
@@ -671,22 +704,14 @@ export const insertSql = {
 				throw new Error(`추가하고자 하는 상이 존재하지 않습니다!`);
 			}
 
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0 &&
-				checkResult3[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Author_has_Award (Author_ID, Award_ID) VALUES (?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Author_ID,
-					data.Award_ID,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Author_has_Award (Author_ID, Award_ID) VALUES (?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Author_ID,
+				data.Award_ID,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -697,9 +722,13 @@ export const insertSql = {
         Award_has_Book insert 시 고려사항
         - 같은 key 존재 여부 확인
     */
-	//점검 완료
+
 	insertAwardHasBook: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -709,12 +738,12 @@ export const insertSql = {
 				data.Award_ID,
 				data.Book_ISBN,
 			]);
-			//check2
+			//존재하는 상인지 체크
 			const check_sql2 = `select count(*) as totalCount from Award where ID=? for update`;
 			const [checkResult2] = await promisePool.query(check_sql2, [
 				data.Award_ID,
 			]);
-			//check2
+			//존재하는 책인지 체크
 			const check_sql3 = `select count(*) as totalCount from Book where ISBN=? for update`;
 			const [checkResult3] = await promisePool.query(check_sql3, [
 				data.Book_ISBN,
@@ -730,22 +759,14 @@ export const insertSql = {
 				throw new Error(`추가하고자 하는 책이 존재하지 않습니다!`);
 			}
 
-			if (
-				checkResult[0].totalCount === 0 &&
-				checkResult2[0].totalCount !== 0 &&
-				checkResult3[0].totalCount !== 0
-			) {
-				//execute
-				const sql = `INSERT INTO Award_has_Book (Award_ID, Book_ISBN) VALUES (?,?)`;
-				const [result] = await promisePool.query(sql, [
-					data.Award_ID,
-					data.Book_ISBN,
-				]);
-				await promisePool.query(`commit;`);
-				return { success: true };
-			} else {
-				throw new Error(`추가 실패!`);
-			}
+			//execute
+			const sql = `INSERT INTO Award_has_Book (Award_ID, Book_ISBN) VALUES (?,?)`;
+			const [result] = await promisePool.query(sql, [
+				data.Award_ID,
+				data.Book_ISBN,
+			]);
+			await promisePool.query(`commit;`);
+			return { success: true };
 		} catch (error) {
 			await promisePool.query(`rollback;`);
 			console.log(error.message);
@@ -760,9 +781,13 @@ export const deleteSql = {
         -reservation
         -shopping_basket
     */
-	//점검 완료
+
 	deleteCustomer: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -807,9 +832,13 @@ export const deleteSql = {
         -Reservation
         -Contains
     */
-	//점검완료
+
 	deleteBook: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -868,9 +897,13 @@ export const deleteSql = {
         -Book
         -Author_has_Award
     */
-	//점검 완료
+
 	deleteAuthor: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -917,9 +950,13 @@ export const deleteSql = {
         -Author_has_Award
         -Award_has_Book
     */
-	//점검 완료
+
 	deleteAward: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -962,9 +999,13 @@ export const deleteSql = {
         -Author_has_Award
         -Award_has_Book
     */
-	//점검 완료
+
 	deleteWarehouse: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -998,9 +1039,13 @@ export const deleteSql = {
         Reservation 삭제시 함께 고려해야할 사항
         - 창고에 책 다시 돌려놓기
     */
-	//점검 완료
+
 	deleteReservation: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1043,9 +1088,13 @@ export const deleteSql = {
         - contains
 		- 창고에 책 다시 놀려놓기
     */
-	//점검 완료
+
 	deleteShoppingBasket: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1103,16 +1152,20 @@ export const deleteSql = {
         Inventory 삭제시 함께 고려해야할 사항
         - 없음
     */
-	//점검 완료
+
 	deleteInventory: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
 			const check_sql = `select count(*) as totalCount from Inventory where Warehouse_Code=? and Book_ISBN=? for update`;
 			const [checkResult] = await promisePool.query(check_sql, [
-				key.Warehouse_Code_origin,
-				key.Book_ISBN_origin,
+				key.Warehouse_Code,
+				key.Book_ISBN,
 			]);
 
 			if (checkResult[0].totalCount === 1) {
@@ -1137,9 +1190,13 @@ export const deleteSql = {
         Author_has_Award 삭제시 함께 고려해야할 사항
         - 없음
     */
-	//점검 완료
+
 	deleteAuthorHasAward: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1171,9 +1228,13 @@ export const deleteSql = {
         Award_has_Book 삭제시 함께 고려해야할 사항
         - 없음
     */
-	//점검 완료
+
 	deleteAwardHasBook: async (key) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1208,9 +1269,13 @@ export const updateSql = {
         -reservation
         -shopping_basket
     */
-	//점검완료
+
 	updateCustomer: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1280,9 +1345,13 @@ export const updateSql = {
     - Contains
     - Reservation
     */
-	//점검 완료
+
 	updateBook: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1387,9 +1456,13 @@ export const updateSql = {
         -Book
         -Author_has_Award
     */
-	//점검 완료
+
 	updateAuthor: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1455,9 +1528,13 @@ export const updateSql = {
         -Author_has_Award
         -Award_has_Book
     */
-	//점검 완료
+
 	updateAward: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1524,9 +1601,13 @@ export const updateSql = {
         -변경하고자하는 Code 존재 여부
         -inventory
     */
-	//점검 완료
+
 	updateWarehouse: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check
@@ -1580,9 +1661,13 @@ export const updateSql = {
         - book
         - customer
     */
-	//점검 완료
+
 	updateReservation: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check 변경하려는 id가 있는지 체크
@@ -1632,9 +1717,13 @@ export const updateSql = {
         Shopping_basket 관계를 맺은 모든 테이블을 수정해주어야함
         - Contains
     */
-	//점검 완료
+
 	updateShoppingBasket: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//변경하려는 id가 있는지 체크
@@ -1695,9 +1784,13 @@ export const updateSql = {
         - 변경하려는 warehouse 존재여부 확인
         - 변경하려는 book 존재 여부 확인
     */
-	//점검 완료
+
 	updateInventory: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check 변경하려는 id가 있는지 체크
@@ -1746,9 +1839,13 @@ export const updateSql = {
         - 변경하려는 Author 존재여부 확인
         - 변경하려는 Award 존재 여부 확인
     */
-	//점검 완료
+
 	updateAuthorHasAward: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check 변경하려는 id가 있는지 체크
@@ -1796,9 +1893,13 @@ export const updateSql = {
         - 변경하려는 Author 존재여부 확인
         - 변경하려는 Award 존재 여부 확인
     */
-	//점검 완료
+
 	updateAwardHasBook: async (data) => {
 		try {
+			//isolation 레벨 변경
+			await promisePool.query(
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
+			);
 			//trasaction 시작
 			await promisePool.query(`start transaction;`);
 			//check 변경하려는 id가 있는지 체크
