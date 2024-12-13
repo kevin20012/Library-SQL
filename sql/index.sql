@@ -1,0 +1,1 @@
+create index pickup on reservation(pickup_time);

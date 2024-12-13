@@ -193,7 +193,7 @@ export const updateSql = {
 				이를 막을 방법이 없어 serializable로 설정하였음.
 			*/
 			await promisePool.query(
-				`SET SESSION TRANSACTION ISOLATION LEVEL READ SERIALIZABLE;`
+				`SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;`
 			);
 
 			//trasaction 시작
@@ -210,6 +210,7 @@ export const updateSql = {
 			const tenMinuteAfter = new Date(
 				pickUpDateTime.getTime() + 10 * 1000 * 60
 			);
+			console.log("hi");
 
 			const checkTenMinSql = `select count(*) AS totalCount from Reservation where ID != ? and Pickup_time Between ? and ?`;
 			const [checkResult] = await promisePool.query(checkTenMinSql, [
@@ -218,7 +219,7 @@ export const updateSql = {
 				format(tenMinuteAfter, "yyyy-MM-dd HH:mm:ss"),
 				,
 			]);
-
+			console.log(checkResult);
 			if (checkResult[0].totalCount > 0) {
 				throw new Error(
 					"10분 전후로 픽업 예약자가 존재해 해당 시간으로 예약 수정이 불가합니다!"
