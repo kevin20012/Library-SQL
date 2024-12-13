@@ -94,8 +94,12 @@
                                         /></td>
 									<td>{{Number}}</td>
 									<td>{{Reservation_date}}</td>
-									<td><input {{#if (eq status "confirmed")}} style="outline: none; box-shadow: none; border:none;background-color: transparent;" {{/if}}
-												type="datetime-local"
+									<td><input {{#if (eq status "confirmed")}} 
+													style="outline: none; box-shadow: none; border:none;background-color: transparent; text-align:center;" 
+													type="text"
+												{{else}}
+													type="datetime-local"
+												{{/if}}
 												name="Pickup_time_modify"
 												class="form-control"
 												value="{{Pickup_time}}"

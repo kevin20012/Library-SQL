@@ -1,17 +1,26 @@
 import random
+from datetime import datetime, timedelta
 import re
 from faker import Faker
 
 fake = Faker()
 
+#===============file name===============
+FILENAME = "./sql/insert.sql"
+#======================================
+
+#=============Configuration=============
 NUM_CUSTOMER = 1000
 NUM_BOOKS = 100000
 PROB_AWARD_TO_BOOK = 0.2
 MAX_BOOK_COUNT_FOR_EACH = 50 #각 책이 최대 몇개까지 존재할지를 결정
 NUM_AUTHOR = 5000
 PROB_AWARD_TO_AUTHOR = 0.2 #몇 퍼센트의 작가에게 수상을 할지 결정
-NUM_AWARD = 1000
-NUM_WAREHOUSE = 100
+NUM_AWARD = 5000
+NUM_WAREHOUSE = 1000
+NUM_RESERVATION = 20000
+NUM_SHOPPINGBASKET = 200000
+#======================================
 
 Admin = {
     "name": "admin",
@@ -205,6 +214,59 @@ def generate_inventory(books_isbn, warehouses_code):
 
     return result
 
+def generate_reservation(book_isbns, customer_emails):
+    '''
+    Reservation 데이터를 생성한다.
+    10분전후로 예약이 없도록한다.
+    '''
+    
+    result = []
+    reserved_pickup_times = set()  # Pickup time 중복 방지용
+
+    for reservation_id in range(1, NUM_RESERVATION + 1):
+        book_isbn = random.choice(book_isbns)  # Book_ISBN 랜덤 선택
+        customer_email = random.choice(customer_emails)  # Customer_Email 랜덤 선택
+        number = random.randint(1, 5)  # Number 값 랜덤 (1~5 사이 값)
+        
+        # Reservation_date와 Pickup_time 생성
+        reservation_date = fake.date_time_this_year(before_now=True, after_now=False).strftime('%Y-%m-%d %H:%M:%S')
+        pickup_time = datetime.strptime(reservation_date, '%Y-%m-%d %H:%M:%S') + timedelta(minutes=random.randint(10, 120))
+
+        # Pickup_time이 중복되지 않도록 10분 단위로 조정
+        while any(abs((pickup_time - existing_time).total_seconds()) < 600 for existing_time in reserved_pickup_times):
+            pickup_time += timedelta(minutes=10)
+
+        reserved_pickup_times.add(pickup_time)
+        
+        temp = f"({book_isbn}, '{customer_email}', {reservation_id}, '{reservation_date}', '{pickup_time.strftime('%Y-%m-%d %H:%M:%S')}', {number})"
+        result.append(temp)
+    
+    return result
+
+def generate_shopping_basket_and_contains(book_isbns, customer_emails):
+    '''
+    shopping_basket과 그에 해당하는 contains 데이터를 생성한다.
+    
+    '''
+
+    shopping_basket_data = []
+    contains_data = []
+
+    for basket_id in range(1, NUM_SHOPPINGBASKET+1):
+        # shopping_basket 데이터 생성
+        customer_email = random.choice(customer_emails)  # 랜덤 고객 이메일 선택
+        order_date = fake.date_time_this_year().strftime('%Y-%m-%d %H:%M:%S')  # 주문 날짜 생성
+        shopping_basket_data.append(f"({basket_id}, '{order_date}', '{customer_email}')")
+
+        # contains 데이터 생성
+        num_books_in_basket = random.randint(1, 5)  # 장바구니에 담길 책 개수 (1~5개 랜덤)
+        selected_books = random.sample(book_isbns, num_books_in_basket)  # 책 ISBN 선택
+        for book_isbn in selected_books:
+            book_count = random.randint(1, 5)  # 각 책의 수량 (1~5 랜덤)
+            contains_data.append(f"({book_isbn}, {basket_id}, {book_count})")
+
+    return shopping_basket_data, contains_data
+
 # SQL 파일 저장 함수
 def save_to_sql(filename, table_name, data, columns):
     with open(filename, mode='a', encoding='utf-8') as file:
@@ -212,8 +274,6 @@ def save_to_sql(filename, table_name, data, columns):
         file.write(",\n".join(data))
         file.write(";\n\n")
 
-# 메인 실행
-FILENAME = "insert.sql"
 
 # SQL 파일 초기화
 open(FILENAME, 'w').close()
@@ -262,3 +322,15 @@ save_to_sql(FILENAME, "Warehouse", warehouse_data, ["Code", "Phone", "Address"])
 print("Make Inventory...")
 inventory_data = generate_inventory(book_isbns, warehouse_codes)
 save_to_sql(FILENAME, "Inventory", inventory_data, ["Warehouse_Code", "Book_ISBN", "Number"])
+
+# 9. Reservation
+print("Make Reservation...")
+customer_emails = [row.split(',')[0].strip("('") for row in customer_data if row.split(',')[4].strip(" '") == 'Customer']
+reservation_data = generate_reservation(book_isbns, customer_emails)
+save_to_sql(FILENAME, "Reservation", reservation_data, ["Book_ISBN", "Customer_Email", "ID", "Reservation_date", "Pickup_time", "Number"])
+
+# 10. ShoppingBasket & Contains
+print("Make ShoppingBasket...")
+shopping_basket_data, contains_data = generate_shopping_basket_and_contains(book_isbns, customer_emails)
+save_to_sql(FILENAME, "Shopping_basket", shopping_basket_data, ["BasketID", "Order_date", "Customer_Email"])
+save_to_sql(FILENAME, "Contains", contains_data, ["Book_ISBN", "Shopping_basket_BasketID", "Number"])
