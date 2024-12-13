@@ -136,7 +136,7 @@ router.get("/search", async (req, res) => {
 		if (startPage - 2 < 1) {
 			prevPage = 1;
 		} else {
-			prevPage = startPage - 2;
+			prevPage = startPage - 1;
 		}
 		if (endPage + 1 > search_info.totalPages) {
 			nextPage = search_info.totalPages;

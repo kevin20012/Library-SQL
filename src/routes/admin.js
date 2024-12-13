@@ -99,7 +99,7 @@ function myRouter(router, entity) {
 			if (startPage - 2 < 1) {
 				prevPage = 1;
 			} else {
-				prevPage = startPage - 2;
+				prevPage = startPage - 1;
 			}
 			if (endPage + 1 > entity_info.totalPages) {
 				nextPage = entity_info.totalPages;
