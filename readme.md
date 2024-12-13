@@ -22,9 +22,11 @@ DB_PORT=3306
 -   `source insert.sql`
 -   `source index.sql`
 
-3. 프로젝트 최상단 경로에서 `npm run start` 실행
+3. 프로젝트 최상단 경로에서 `npm link hbs` 실행
 
-4. **관리자와 구매자**
+4. 프로젝트 최상단 경로에서 `npm run start` 실행
+
+5. **관리자와 구매자**
 
 -   관리자 id / pw
 
