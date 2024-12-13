@@ -97,7 +97,7 @@ export const selectSql = {
 			const sql = `select r.ID, r.Book_ISBN AS ISBN, b.Title AS Title, r.Number as Number, DATE_FORMAT(r.Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(r.Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Count(*) OVER() AS totalCount
             from Reservation r
             JOIN Book b ON r.Book_ISBN = b.ISBN
-            where r.Customer_Email= ? and r.Customer_Email != 'admin' LIMIT ? OFFSET ?`;
+            where r.Customer_Email= ? and r.Customer_Email != 'admin' ORDER BY r.Reservation_date DESC LIMIT ? OFFSET ?`;
 
 			const [result] = await promisePool.query(sql, [
 				email,
@@ -145,7 +145,7 @@ export const selectSql = {
 
 			const sql = `select s.BasketID AS BasketID, DATE_FORMAT(s.Order_date, '%Y-%m-%d %H:%i:%s') AS Order_date, Count(*) OVER() AS totalCount
             from Shopping_basket s
-            where s.Customer_Email != 'admin' and s.Customer_Email= ? and s.Order_date is not null LIMIT ? OFFSET ?`;
+            where s.Customer_Email != 'admin' and s.Customer_Email= ? and s.Order_date is not null ORDER BY Order_date DESC LIMIT ? OFFSET ?`;
 
 			const [result] = await promisePool.query(sql, [
 				email,

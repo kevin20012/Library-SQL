@@ -23,7 +23,7 @@ const getInfoFromTable = async (tableName, req, res) => {
 	try {
 		// 클라이언트에서 page와 limit 요청 (기본값 설정)
 		const page = parseInt(req.query.page) || 1; // 현재 페이지 번호 (기본값 1)
-		const limit = parseInt(req.query.limit) || 30; // 페이지당 항목 수 (기본값 30)
+		const limit = parseInt(req.query.limit) || 10; // 페이지당 항목 수 (기본값 30)
 
 		// OFFSET 계산
 		const offset = (page - 1) * limit;

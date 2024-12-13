@@ -120,6 +120,46 @@
 				</div>
 			</div>
 		</div>
+		<!-- Pagination -->
+		<nav
+			aria-label="Page navigation"
+			class="d-flex justify-content-center mt-4"
+		>
+			<ul class="pagination">
+				<li class="page-item">
+					<a
+						class="page-link"
+						href="/main/purchaseHistory?page=1"
+					>&laquo;</a>
+				</li>
+				<li class="page-item">
+					<a
+						class="page-link"
+						href="/main/purchaseHistory?page={{pageInfo.prevPage}}"
+					>이전</a>
+				</li>
+				{{#each Page}}
+					<li class="page-item {{#if (eq this ../pageInfo.currentPage)}}active{{/if}}">
+						<a
+							class="page-link"
+							href="/main/purchaseHistory?page={{this}}"
+						>{{this}}</a>
+					</li>
+				{{/each}}
+				<li class="page-item">
+					<a
+						class="page-link"
+						href="/main/purchaseHistory?page={{pageInfo.nextPage}}"
+					>다음</a>
+				</li>
+				<li class="page-item">
+					<a
+						class="page-link"
+						href="/main/purchaseHistory?page={{pageInfo.totalPages}}"
+					>&raquo;</a>
+				</li>
+			</ul>
+		</nav>
 
 		<!-- JavaScript -->
 		<script>
