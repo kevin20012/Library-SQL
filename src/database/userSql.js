@@ -94,7 +94,8 @@ export const selectSql = {
 				`SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;`
 			);
 
-			const sql = `select r.ID, r.Book_ISBN AS ISBN, b.Title AS Title, r.Number as Number, DATE_FORMAT(r.Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(r.Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Count(*) OVER() AS totalCount
+			const sql = `select r.ID, r.Book_ISBN AS ISBN, b.Title AS Title, r.Number as Number, 
+			DATE_FORMAT(r.Reservation_date, '%Y-%m-%d %H:%i:%s') AS Reservation_date, DATE_FORMAT(r.Pickup_time, '%Y-%m-%d %H:%i:%s') AS Pickup_time, Count(*) OVER() AS totalCount
             from Reservation r
             JOIN Book b ON r.Book_ISBN = b.ISBN
             where r.Customer_Email= ? and r.Customer_Email != 'admin' ORDER BY r.Reservation_date DESC LIMIT ? OFFSET ?`;
